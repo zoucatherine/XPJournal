@@ -1,0 +1,236 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tahoma&display=swap');
+
+  .kw-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+    background: #f5c8d8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 20 L20 0 L40 20 L20 40 Z' fill='none' stroke='%23f0afc7' stroke-width='0.8'/%3E%3C/svg%3E") repeat;
+  }
+
+  .kw-window {
+    width: 300px;
+    background: #fdeef4;
+    border: 1.5px solid #d46ba0;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 2px 3px 0 #c45a8a, 1px 1px 0 #e89cc0;
+    font-family: "Tahoma", "MS Sans Serif", sans-serif;
+    font-size: 11px;
+    overflow: hidden;
+  }
+
+  .kw-titlebar {
+    background: linear-gradient(180deg,
+      #f9b8d8 0%,
+      #f49ccb 20%,
+      #eb7db9 50%,
+      #e06aac 75%,
+      #d45c9e 100%
+    );
+    padding: 4px 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 22px;
+    box-sizing: border-box;
+    border-top: 1.5px solid #f9d0e8;
+    border-left: 1.5px solid #d46ba0;
+    border-right: 1.5px solid #d46ba0;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .kw-title-left {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .kw-title-icon {
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .kw-title-text {
+    color: #fff;
+    font-weight: bold;
+    font-size: 11px;
+    text-shadow: 1px 1px 1px #993370;
+    letter-spacing: 0.3px;
+  }
+
+  .kw-btn-group {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+
+  .kw-ctrl {
+    width: 16px;
+    height: 14px;
+    border-radius: 2px;
+    border: 1px solid rgba(180,60,120,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    text-shadow: 1px 1px #8b2060;
+    line-height: 1;
+  }
+
+  .kw-min {
+    background: linear-gradient(180deg, #f2a6ce 0%, #e07ab2 100%);
+  }
+
+  .kw-max {
+    background: linear-gradient(180deg, #f2a6ce 0%, #e07ab2 100%);
+  }
+
+  .kw-close {
+    background: linear-gradient(180deg, #f87ec3 0%, #d4469a 50%, #bf3088 100%);
+    border-color: #8b1055;
+    font-size: 9px;
+  }
+
+  .kw-menubar {
+    background: #fce4f0;
+    border-bottom: 1px solid #e8a0c4;
+    padding: 2px 5px;
+    display: flex;
+    gap: 2px;
+  }
+
+  .kw-menu-item {
+    padding: 1px 6px;
+    font-size: 11px;
+    color: #5a1040;
+    cursor: pointer;
+    border-radius: 2px;
+  }
+
+  .kw-menu-item:hover {
+    background: #e875b8;
+    color: #fff;
+  }
+
+  .kw-content {
+    padding: 14px 14px 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    color: #3a0a2a;
+    line-height: 16px;
+  }
+
+  .kw-icon-wrap {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+  }
+
+  .kw-msg {
+    font-size: 11px;
+    color: #3a0a2a;
+    line-height: 16px;
+  }
+
+  .kw-divider {
+    height: 1px;
+    background: linear-gradient(90deg, #f0acd0 0%, #e076b0 50%, #f0acd0 100%);
+    margin: 0 8px;
+  }
+
+  .kw-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 11px 10px;
+  }
+
+  .kw-btn {
+    background: linear-gradient(180deg, #fce8f3 0%, #f8d0e8 30%, #f0a8d0 70%, #e890c4 100%);
+    border: 1px solid #c0609a;
+    border-radius: 3px;
+    padding: 3px 20px;
+    font-family: "Tahoma", sans-serif;
+    font-size: 11px;
+    color: #3a0a2a;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 1px 1px 0 #b85090;
+    outline: none;
+    min-width: 70px;
+  }
+
+  .kw-btn:hover {
+    background: linear-gradient(180deg, #fdd0ec 0%, #f8b8e0 30%, #f088c8 70%, #e070b8 100%);
+    border-color: #a04080;
+  }
+
+  .kw-btn:active {
+    background: linear-gradient(180deg, #e890c4 0%, #f0a8d0 100%);
+    box-shadow: inset 1px 1px 2px rgba(160,40,100,0.3);
+  }
+
+  .kw-status {
+    background: linear-gradient(180deg, #fce4f0 0%, #f8d8ec 100%);
+    border-top: 1px solid #e8a0c4;
+    padding: 2px 5px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .kw-status-pane {
+    flex: 1;
+    border: 1px inset #d08ab8;
+    background: #fdeef6;
+    padding: 1px 4px;
+    font-size: 10px;
+    color: #804060;
+  }
+</style>
+
+<div class="kw-wrap">
+  <div>
+    <div class="kw-titlebar">
+      <div class="kw-title-left">
+        <span class="kw-title-icon">🌸</span>
+        <span class="kw-title-text">Internet Explorer</span>
+      </div>
+      <div class="kw-btn-group">
+        <div class="kw-ctrl kw-min">_</div>
+        <div class="kw-ctrl kw-max">□</div>
+        <div class="kw-ctrl kw-close">✕</div>
+      </div>
+    </div>
+    <div class="kw-window">
+      <div class="kw-menubar">
+        <span class="kw-menu-item">File</span>
+        <span class="kw-menu-item">Edit</span>
+        <span class="kw-menu-item">View</span>
+        <span class="kw-menu-item">Favorites</span>
+        <span class="kw-menu-item">Help</span>
+      </div>
+      <div class="kw-content">
+        <svg class="kw-icon-wrap" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="14" fill="#f7b8d8" stroke="#d46ba0" stroke-width="1.5"/>
+          <text x="16" y="22" text-anchor="middle" font-size="17" fill="#c03880">!</text>
+        </svg>
+        <span class="kw-msg">Are you sure you want to open this file? It originates from a vintage environment. ♡</span>
+      </div>
+      <div class="kw-divider"></div>
+      <div class="kw-buttons">
+        <button class="kw-btn">OK</button>
+        <button class="kw-btn">Cancel</button>
+      </div>
+      <div class="kw-status">
+        <div class="kw-status-pane">Done</div>
+        <div class="kw-status-pane">✿ Local intranet</div>
+      </div>
+    </div>
+  </div>
+</div>

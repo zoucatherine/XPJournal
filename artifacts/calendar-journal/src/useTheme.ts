@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export type ThemeId = "xp-blue" | "win98" | "luna" | "zune";
+export type ThemeId = "xp-blue" | "win98" | "luna" | "zune" | "kawaii";
 
 export interface Theme {
   id: ThemeId;
@@ -13,6 +13,7 @@ export const THEMES: Theme[] = [
   { id: "win98", label: "Win98 Classic", preview: "#000080" },
   { id: "luna", label: "Luna Green", preview: "#2D5016" },
   { id: "zune", label: "Zune Dark", preview: "#2D1B4E" },
+  { id: "kawaii", label: "Kawaii Pink", preview: "#d45c9e" },
 ];
 
 const STORAGE_KEY = "journal-theme";

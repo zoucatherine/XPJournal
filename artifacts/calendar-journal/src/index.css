@@ -369,6 +369,69 @@
   --xp-btn-ctrl: linear-gradient(to bottom, #7B4AAB 0%, #5A2A88 50%, #3A1A68 50%, #6A3A98 100%);
 }
 
+/* =============================================
+   KAWAII PINK THEME
+   ============================================= */
+[data-theme="kawaii"] {
+  --background: 340 60% 85%;
+  --foreground: 330 60% 15%;
+  --border: 330 40% 70%;
+  --card: 340 50% 96%;
+  --card-foreground: 330 60% 15%;
+  --card-border: 330 40% 70%;
+  --popover: 340 50% 96%;
+  --popover-foreground: 330 60% 15%;
+  --popover-border: 330 40% 70%;
+  --primary: 330 55% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 340 40% 88%;
+  --secondary-foreground: 330 60% 20%;
+  --muted: 340 30% 90%;
+  --muted-foreground: 330 30% 45%;
+  --accent: 330 55% 48%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 330 55% 48%;
+  --app-font-sans: Tahoma, "Trebuchet MS", sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: "Courier New", Courier, monospace;
+  --radius: 0;
+
+  --xp-titlebar-from: #eb7db9;
+  --xp-titlebar-to: #f9b8d8;
+  --xp-titlebar-shadow: #993370;
+  --xp-window-bg: #fdeef4;
+  --xp-window-border: #d46ba0;
+  --xp-window-text: #3a0a2a;
+  --xp-border-light: #fce0ee;
+  --xp-border-dark: #c45a8a;
+  --xp-taskbar: linear-gradient(to bottom, #e06aac 0%, #eb7db9 9%, #e06aac 18%, #e06aac 92%, #b84d8a 100%);
+  --xp-start-btn: linear-gradient(to bottom, #e87ab8 0%, #f29acc 9%, #e87ab8 18%, #e87ab8 92%, #c85898 100%);
+  --xp-start-btn-active: linear-gradient(to bottom, #c85898 0%, #e87ab8 100%);
+  --xp-tray: linear-gradient(to bottom, #d45c9e 0%, #bf3088 100%);
+  --xp-tray-active: linear-gradient(to bottom, #bf3088 0%, #d45c9e 100%);
+  --xp-clock: linear-gradient(to bottom, #e878b8 0%, #f298cc 9%, #e878b8 18%, #e878b8 92%, #c85898 100%);
+  --xp-accent: #d45c9e;
+  --xp-accent-dark: #993370;
+  --xp-text-accent: #8b2060;
+  --xp-calendar-bg: #fff5fa;
+  --xp-calendar-text: #3a0a2a;
+  --xp-calendar-other-bg: #fce8f4;
+  --xp-calendar-other-text: #c090b0;
+  --xp-calendar-today-bg: #fce4f0;
+  --xp-calendar-today-border: #d45c9e;
+  --xp-calendar-hover: #fdd8ed;
+  --xp-scrollbar-track: #f8d8ec;
+  --xp-scrollbar-thumb: #fdeef4;
+  --xp-weekday-bg: #fce4f0;
+  --xp-grid-bg: #d46ba0;
+  --xp-separator: #e8a0c4;
+  --xp-separator-light: #fce0ee;
+  --xp-btn-ctrl: linear-gradient(to bottom, #f2a6ce 0%, #e07ab2 50%, #c85898 50%, #da90c4 100%);
+}
+
 .dark {
   --background: 175 40% 45%;
   --foreground: 0 0% 0%;
