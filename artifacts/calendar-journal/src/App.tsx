@@ -30,10 +30,24 @@ const queryClient = new QueryClient();
 
 interface DragPos { x: number; y: number }
 
+const SNAP_THRESHOLD = 30;
+const SNAP_TRANSITION = "left 0.12s ease, top 0.12s ease";
+
+function applySnap(x: number, y: number, elWidth: number, elHeight: number, vw: number, vh: number, taskbarH = 32): DragPos {
+  let sx = x;
+  let sy = y;
+  if (x <= SNAP_THRESHOLD) sx = 0;
+  if (x + elWidth >= vw - SNAP_THRESHOLD) sx = vw - elWidth;
+  if (y <= SNAP_THRESHOLD) sy = 0;
+  if (y + elHeight >= vh - taskbarH - SNAP_THRESHOLD) sy = vh - elHeight - taskbarH;
+  return { x: sx, y: sy };
+}
+
 function useDraggable(storageKey?: string) {
   const windowRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const dragOffset = useRef<DragPos>({ x: 0, y: 0 });
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getStoredPos = (): DragPos | null => {
     if (!storageKey) return null;
@@ -45,6 +59,7 @@ function useDraggable(storageKey?: string) {
   };
 
   const [pos, setPos] = useState<DragPos | null>(getStoredPos);
+  const [isSnapping, setIsSnapping] = useState(false);
 
   const onTitlebarMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -54,6 +69,8 @@ function useDraggable(storageKey?: string) {
     const rect = el.getBoundingClientRect();
     isDragging.current = true;
     dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    setIsSnapping(false);
+    if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
     e.preventDefault();
   }, []);
 
@@ -71,7 +88,29 @@ function useDraggable(storageKey?: string) {
         try { localStorage.setItem(storageKey, JSON.stringify(newPos)); } catch {}
       }
     };
-    const onMouseUp = () => { isDragging.current = false; };
+    const onMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      const el = windowRef.current;
+      if (!el) return;
+      setPos(prev => {
+        if (!prev) return prev;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const snapped = applySnap(prev.x, prev.y, el.offsetWidth, el.offsetHeight, vw, vh);
+        const didSnap = snapped.x !== prev.x || snapped.y !== prev.y;
+        if (didSnap) {
+          setIsSnapping(true);
+          if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
+          snapTimerRef.current = setTimeout(() => setIsSnapping(false), 200);
+          if (storageKey) {
+            try { localStorage.setItem(storageKey, JSON.stringify(snapped)); } catch {}
+          }
+          return snapped;
+        }
+        return prev;
+      });
+    };
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
     return () => {
@@ -81,7 +120,7 @@ function useDraggable(storageKey?: string) {
   }, [storageKey]);
 
   const windowStyle: React.CSSProperties = pos
-    ? { position: "absolute", left: pos.x, top: pos.y }
+    ? { position: "absolute", left: pos.x, top: pos.y, ...(isSnapping ? { transition: SNAP_TRANSITION } : {}) }
     : { position: "absolute", top: "5%", left: "50%", transform: "translateX(-50%)" };
 
   return { pos, windowRef, windowStyle, onTitlebarMouseDown };
@@ -92,6 +131,8 @@ function useDraggableFixed(initialCenter = true) {
   const isDragging = useRef(false);
   const dragOffset = useRef<DragPos>({ x: 0, y: 0 });
   const [pos, setPos] = useState<DragPos | null>(null);
+  const [isSnapping, setIsSnapping] = useState(false);
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onTitlebarMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -101,6 +142,8 @@ function useDraggableFixed(initialCenter = true) {
     const rect = el.getBoundingClientRect();
     isDragging.current = true;
     dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    setIsSnapping(false);
+    if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
     e.preventDefault();
   }, []);
 
@@ -114,7 +157,26 @@ function useDraggableFixed(initialCenter = true) {
       const y = Math.max(0, Math.min(e.clientY - dragOffset.current.y, vh - el.offsetHeight - 32));
       setPos({ x, y });
     };
-    const onMouseUp = () => { isDragging.current = false; };
+    const onMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      const el = windowRef.current;
+      if (!el) return;
+      setPos(prev => {
+        if (!prev) return prev;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const snapped = applySnap(prev.x, prev.y, el.offsetWidth, el.offsetHeight, vw, vh);
+        const didSnap = snapped.x !== prev.x || snapped.y !== prev.y;
+        if (didSnap) {
+          setIsSnapping(true);
+          if (snapTimerRef.current) clearTimeout(snapTimerRef.current);
+          snapTimerRef.current = setTimeout(() => setIsSnapping(false), 200);
+          return snapped;
+        }
+        return prev;
+      });
+    };
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
     return () => {
@@ -124,7 +186,7 @@ function useDraggableFixed(initialCenter = true) {
   }, []);
 
   const windowStyle: React.CSSProperties = pos
-    ? { position: "fixed", left: pos.x, top: pos.y }
+    ? { position: "fixed", left: pos.x, top: pos.y, ...(isSnapping ? { transition: SNAP_TRANSITION } : {}) }
     : { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
 
   return { windowRef, windowStyle, onTitlebarMouseDown };
