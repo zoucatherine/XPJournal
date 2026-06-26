@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: entries
+    description: Journal entry operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,118 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /entries:
+    get:
+      operationId: listEntries
+      tags: [entries]
+      summary: List all journal entries
+      description: Returns all journal entries (date, title, and body)
+      responses:
+        "200":
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JournalEntry"
+    post:
+      operationId: createEntry
+      tags: [entries]
+      summary: Create a journal entry
+      description: Creates a new journal entry for a given date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJournalEntryInput"
+      responses:
+        "201":
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+        "409":
+          description: Entry already exists for that date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /entries/{date}:
+    get:
+      operationId: getEntry
+      tags: [entries]
+      summary: Get a journal entry by date
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            description: ISO date string (YYYY-MM-DD)
+      responses:
+        "200":
+          description: Journal entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateEntry
+      tags: [entries]
+      summary: Update a journal entry
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJournalEntryInput"
+      responses:
+        "200":
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JournalEntry"
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteEntry
+      tags: [entries]
+      summary: Delete a journal entry
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Entry deleted
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +147,54 @@ components:
           type: string
       required:
         - status
-
+    JournalEntry:
+      type: object
+      properties:
+        date:
+          type: string
+          description: ISO date string (YYYY-MM-DD)
+        title:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - date
+        - title
+        - body
+        - createdAt
+        - updatedAt
+    CreateJournalEntryInput:
+      type: object
+      properties:
+        date:
+          type: string
+          description: ISO date string (YYYY-MM-DD)
+        title:
+          type: string
+        body:
+          type: string
+      required:
+        - date
+        - title
+        - body
+    UpdateJournalEntryInput:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+      required:
+        - title
+        - body
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

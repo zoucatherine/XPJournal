@@ -1,0 +1,442 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-border: hsl(var(--card-border));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover-border: hsl(var(--popover-border));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-border: var(--primary-border);
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-border: var(--secondary-border);
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-border: var(--muted-border);
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-border: var(--accent-border);
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-border: var(--destructive-border);
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary-border: var(--sidebar-primary-border);
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent-border: var(--sidebar-accent-border);
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --font-sans: var(--app-font-sans);
+  --font-serif: var(--app-font-serif);
+  --font-mono: var(--app-font-mono);
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: calc(2.5 / 2.25);
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1;
+  --text-6xl: 3.75rem;
+  --text-6xl--line-height: 1;
+  --text-7xl: 4.5rem;
+  --text-7xl--line-height: 1;
+  --text-8xl: 6rem;
+  --text-8xl--line-height: 1;
+  --text-9xl: 8rem;
+  --text-9xl--line-height: 1;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: 175 40% 45%; /* XP teal desktop */
+  --foreground: 0 0% 0%;
+  --border: 0 0% 50%;
+  --card: 50 16% 88%; /* #ECE9D8 XP silver */
+  --card-foreground: 0 0% 0%;
+  --card-border: 0 0% 50%;
+  --popover: 50 16% 88%;
+  --popover-foreground: 0 0% 0%;
+  --popover-border: 0 0% 50%;
+  --primary: 218 82% 23%; /* #0A246A */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 80%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 85%;
+  --muted-foreground: 0 0% 30%;
+  --accent: 215 50% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 215 50% 50%;
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+  --sidebar: 50 16% 88%;
+  --sidebar-foreground: 0 0% 0%;
+  --sidebar-border: 0 0% 50%;
+  --sidebar-primary: 218 82% 23%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 80%;
+  --sidebar-accent-foreground: 0 0% 0%;
+  --sidebar-ring: 215 50% 50%;
+  --app-font-sans: Tahoma, "Trebuchet MS", sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: "Courier New", Courier, monospace;
+  --radius: 0;
+
+  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-sm: 2px 2px 5px rgba(0,0,0,0.3);
+  --shadow: 3px 3px 6px rgba(0,0,0,0.4);
+  --shadow-md: 4px 4px 10px rgba(0,0,0,0.5);
+  --shadow-lg: 5px 5px 15px rgba(0,0,0,0.5);
+  --shadow-xl: 10px 10px 20px rgba(0,0,0,0.5);
+  --shadow-2xl: 15px 15px 25px rgba(0,0,0,0.5);
+}
+
+.dark {
+  /* No dark mode for XP theme */
+  --background: 175 40% 45%; /* XP teal desktop */
+  --foreground: 0 0% 0%;
+  --border: 0 0% 50%;
+  --card: 50 16% 88%; /* #ECE9D8 XP silver */
+  --card-foreground: 0 0% 0%;
+  --card-border: 0 0% 50%;
+  --popover: 50 16% 88%;
+  --popover-foreground: 0 0% 0%;
+  --popover-border: 0 0% 50%;
+  --primary: 218 82% 23%; /* #0A246A */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 80%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 85%;
+  --muted-foreground: 0 0% 30%;
+  --accent: 215 50% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 215 50% 50%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    background-image: url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 3h1v1H1V3zm2-2h1v1H3V1z' fill='%239C92AC' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+  }
+}
+
+/* XP UI Components */
+.xp-window {
+  background-color: #ECE9D8;
+  border: 1px solid #0055EA;
+  border-radius: 8px 8px 3px 3px;
+  box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-titlebar {
+  background: linear-gradient(to right, #0A246A 0%, #A6CAF0 100%);
+  color: white;
+  padding: 3px 5px 3px 5px;
+  font-weight: bold;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ECE9D8;
+  text-shadow: 1px 1px #0A246A;
+  user-select: none;
+}
+
+.xp-titlebar-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.xp-btn-control {
+  width: 21px;
+  height: 21px;
+  border: 1px solid white;
+  border-radius: 3px;
+  box-shadow: inset -1px -1px 2px rgba(0,0,0,0.3), inset 1px 1px 2px rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.xp-btn-close {
+  background: linear-gradient(to bottom, #E87461 0%, #D8402A 50%, #C42611 50%, #E35340 100%);
+  border-color: #F8F7F6;
+}
+.xp-btn-close:active {
+  box-shadow: inset 2px 2px 3px rgba(0,0,0,0.4);
+}
+.xp-btn-close::before {
+  content: "";
+  display: block;
+  width: 9px;
+  height: 9px;
+  background-color: white;
+  clip-path: polygon(20% 0%, 0% 20%, 30% 50%, 0% 80%, 20% 100%, 50% 70%, 80% 100%, 100% 80%, 70% 50%, 100% 20%, 80% 0%, 50% 30%);
+}
+
+.xp-btn-max, .xp-btn-min {
+  background: linear-gradient(to bottom, #74A5E8 0%, #4088D8 50%, #2671C4 50%, #5394E3 100%);
+  border-color: #F8F7F6;
+}
+.xp-btn-max:active, .xp-btn-min:active {
+  box-shadow: inset 2px 2px 3px rgba(0,0,0,0.4);
+}
+
+.xp-btn-min::before {
+  content: "";
+  display: block;
+  width: 7px;
+  height: 3px;
+  background-color: white;
+  margin-top: 8px;
+}
+
+.xp-btn-max::before {
+  content: "";
+  display: block;
+  width: 9px;
+  height: 9px;
+  border: 2px solid white;
+  border-top-width: 3px;
+}
+
+.xp-body {
+  padding: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.xp-button {
+  background: #ECE9D8;
+  border: 2px outset #FFFFFF;
+  border-right-color: #848280;
+  border-bottom-color: #848280;
+  padding: 4px 12px;
+  color: black;
+  font-family: Tahoma, sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+}
+.xp-button:active {
+  border-style: inset;
+  padding: 5px 11px 3px 13px;
+}
+.xp-button:disabled {
+  color: #ACA899;
+  text-shadow: 1px 1px white;
+}
+
+.xp-inset {
+  background: white;
+  border: 2px inset #FFFFFF;
+  border-left-color: #848280;
+  border-top-color: #848280;
+  color: black;
+}
+
+.xp-input {
+  font-family: Tahoma, sans-serif;
+  font-size: 13px;
+  padding: 3px;
+  outline: none;
+}
+
+.xp-textarea {
+  font-family: Georgia, serif;
+  font-size: 14px;
+  padding: 5px;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+}
+
+.xp-taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(to bottom, #245EDC 0%, #3F8CF3 9%, #245EDC 18%, #245EDC 92%, #333333 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+}
+
+.xp-start-btn {
+  height: 100%;
+  background: linear-gradient(to bottom, #3C8B3C 0%, #59A859 9%, #3C8B3C 18%, #3C8B3C 92%, #2B662B 100%);
+  color: white;
+  font-weight: bold;
+  font-style: italic;
+  font-size: 14px;
+  padding: 0 15px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 0 10px 15px 0;
+  box-shadow: 2px 0 3px rgba(0,0,0,0.3);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  cursor: pointer;
+}
+.xp-start-btn:active {
+  background: linear-gradient(to bottom, #2B662B 0%, #3C8B3C 100%);
+}
+
+.xp-tray {
+  display: flex;
+  height: 100%;
+  padding-left: 10px;
+}
+
+.xp-tray-item {
+  background: linear-gradient(to bottom, #1E4CB4 0%, #153A90 100%);
+  color: white;
+  height: 100%;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  border-right: 1px solid rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+.xp-tray-item.active {
+  background: linear-gradient(to bottom, #153A90 0%, #1E4CB4 100%);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.xp-clock-area {
+  height: 100%;
+  background: linear-gradient(to bottom, #1290E9 0%, #19B9F3 9%, #1290E9 18%, #1290E9 92%, #0B5B9E 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  font-size: 11px;
+  border-left: 1px solid rgba(0,0,0,0.3);
+  box-shadow: inset 1px 0 1px rgba(255,255,255,0.3);
+}
+
+.xp-calendar-day {
+  background: #FFFFFF;
+  border: 1px solid #D4D0C8;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.xp-calendar-day:hover {
+  background: #F0F8FF;
+  border: 2px outset #FFFFFF;
+  border-right-color: #848280;
+  border-bottom-color: #848280;
+}
+.xp-calendar-day:active {
+  border: 2px inset #FFFFFF;
+  border-left-color: #848280;
+  border-top-color: #848280;
+}
+.xp-calendar-day.other-month {
+  background: #F5F5F5;
+  color: #ACA899;
+}
+.xp-calendar-day.today {
+  font-weight: bold;
+  background: #E3F2FD;
+  border: 2px solid #0055EA;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+::-webkit-scrollbar-track {
+  background: #DFDFDF;
+  border-left: 1px solid #D4D0C8;
+}
+::-webkit-scrollbar-thumb {
+  background: #ECE9D8;
+  border: 2px outset #FFFFFF;
+  border-right-color: #848280;
+  border-bottom-color: #848280;
+}
+::-webkit-scrollbar-thumb:active {
+  border-style: inset;
+}
+::-webkit-scrollbar-button:single-button {
+  background: #ECE9D8;
+  display: block;
+  border: 2px outset #FFFFFF;
+  border-right-color: #848280;
+  border-bottom-color: #848280;
+  height: 16px;
+  width: 16px;
+}
+::-webkit-scrollbar-button:single-button:active {
+  border-style: inset;
+}

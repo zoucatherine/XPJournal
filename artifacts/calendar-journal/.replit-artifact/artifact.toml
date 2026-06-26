@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "My Journal"
+version = "1.0.0"
+id = "artifacts/calendar-journal"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25734
+
+[services.development]
+run = "pnpm --filter @workspace/calendar-journal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/calendar-journal", "run", "build" ]
+publicDir = "artifacts/calendar-journal/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25734"
+BASE_PATH = "/"
