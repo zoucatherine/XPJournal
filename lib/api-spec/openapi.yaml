@@ -179,6 +179,10 @@ components:
           type: string
         body:
           type: string
+        mood:
+          type: string
+          nullable: true
+          description: Mood emoji tag (e.g. 😊)
         createdAt:
           type: string
         updatedAt:
@@ -199,6 +203,10 @@ components:
           type: string
         body:
           type: string
+        mood:
+          type: string
+          nullable: true
+          description: Mood emoji tag (e.g. 😊)
       required:
         - date
         - title
@@ -210,6 +218,10 @@ components:
           type: string
         body:
           type: string
+        mood:
+          type: string
+          nullable: true
+          description: Mood emoji tag (e.g. 😊)
       required:
         - title
         - body

@@ -14,6 +14,8 @@ export interface JournalEntry {
   date: string;
   title: string;
   body: string;
+  /** Mood emoji tag (e.g. 😊) */
+  mood?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,11 +25,15 @@ export interface CreateJournalEntryInput {
   date: string;
   title: string;
   body: string;
+  /** Mood emoji tag (e.g. 😊) */
+  mood?: string | null;
 }
 
 export interface UpdateJournalEntryInput {
   title: string;
   body: string;
+  /** Mood emoji tag (e.g. 😊) */
+  mood?: string | null;
 }
 
 export interface ErrorResponse {

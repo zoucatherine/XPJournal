@@ -6,6 +6,7 @@ export const journalEntriesTable = pgTable("journal_entries", {
   date: text("date").primaryKey(),
   title: text("title").notNull(),
   body: text("body").notNull(),
+  mood: text("mood"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -18,6 +19,7 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntriesTable).
 export const updateJournalEntrySchema = z.object({
   title: z.string(),
   body: z.string(),
+  mood: z.string().nullable().optional(),
 });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;

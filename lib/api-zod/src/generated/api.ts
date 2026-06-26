@@ -29,6 +29,7 @@ export const SearchEntriesResponseItem = zod.object({
   "date": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "title": zod.string(),
   "body": zod.string(),
+  "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)'),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -43,6 +44,7 @@ export const ListEntriesResponseItem = zod.object({
   "date": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "title": zod.string(),
   "body": zod.string(),
+  "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)'),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -56,13 +58,15 @@ export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
 export const CreateEntryBody = zod.object({
   "date": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "title": zod.string(),
-  "body": zod.string()
+  "body": zod.string(),
+  "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)')
 })
 
 export const CreateEntryResponse = zod.object({
   "date": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "title": zod.string(),
   "body": zod.string(),
+  "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)'),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -79,6 +83,7 @@ export const GetEntryResponse = zod.object({
   "date": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "title": zod.string(),
   "body": zod.string(),
+  "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)'),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -93,13 +98,15 @@ export const UpdateEntryParams = zod.object({
 
 export const UpdateEntryBody = zod.object({
   "title": zod.string(),
-  "body": zod.string()
+  "body": zod.string(),
+  "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)')
 })
 
 export const UpdateEntryResponse = zod.object({
   "date": zod.string().describe('ISO date string (YYYY-MM-DD)'),
   "title": zod.string(),
   "body": zod.string(),
+  "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)'),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })

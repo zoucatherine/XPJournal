@@ -576,6 +576,12 @@ function Desktop() {
     return entry ? entry.title || "Entry" : null;
   };
 
+  const getEntryMood = (date: Date) => {
+    if (!entries) return null;
+    const entry = entries.find(e => e.date === format(date, dateFormat));
+    return entry?.mood ?? null;
+  };
+
   const desktopStyle = getDesktopStyle();
 
   return (
@@ -665,6 +671,7 @@ function Desktop() {
               const isCurrentMonth = isSameMonth(day, monthStart);
               const isDayToday = isToday(day);
               const entryExists = hasEntry(day);
+              const mood = getEntryMood(day);
 
               return (
                 <div
@@ -678,7 +685,7 @@ function Desktop() {
                 >
                   <div className="flex justify-between items-start">
                     <span className="text-sm">{format(day, "d")}</span>
-                    {entryExists && (
+                    {entryExists && !mood && (
                       <div
                         className="w-3 h-3 shadow-sm mt-1 mr-1"
                         style={{
@@ -687,6 +694,11 @@ function Desktop() {
                         }}
                         title="Entry exists"
                       />
+                    )}
+                    {mood && (
+                      <span className="text-base leading-none mt-0.5 mr-0.5" title={`Mood: ${mood}`}>
+                        {mood}
+                      </span>
                     )}
                   </div>
                   {entryExists && (
@@ -758,8 +770,11 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   const updateEntry = useUpdateEntry();
   const deleteEntry = useDeleteEntry();
 
+  const MOODS = ["😊", "😄", "😍", "😎", "🥳", "😌", "😐", "😔", "😢", "😠", "😴", "🤒", "🎉", "💪", "🙏"];
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [mood, setMood] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   const initRef = useRef<string | null>(null);
@@ -768,10 +783,12 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
     if (entry && initRef.current !== dateStr) {
       setTitle(entry.title);
       setBody(entry.body);
+      setMood(entry.mood ?? null);
       initRef.current = dateStr;
     } else if (!entry && !isLoading && initRef.current !== dateStr) {
       setTitle("");
       setBody("");
+      setMood(null);
       initRef.current = dateStr;
     }
   }, [entry, isLoading, dateStr]);
@@ -780,7 +797,7 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
     setSaveStatus("Saving...");
     if (entry) {
       updateEntry.mutate(
-        { date: dateStr, data: { title, body } },
+        { date: dateStr, data: { title, body, mood } },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
@@ -792,7 +809,7 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
       );
     } else {
       createEntry.mutate(
-        { data: { date: dateStr, title, body } },
+        { data: { date: dateStr, title, body, mood } },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
@@ -858,7 +875,7 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
           {isLoading ? (
             <div className="p-8 text-center text-sm font-sans">Loading...</div>
           ) : (
-            <div className="flex flex-col gap-4 h-[400px]">
+            <div className="flex flex-col gap-4 h-[490px]">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-sans" style={{ color: "var(--xp-window-text)" }}>Title:</label>
                 <input
@@ -868,6 +885,38 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
                   className="xp-inset xp-input w-full"
                   placeholder="Untitled Entry"
                 />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-sans" style={{ color: "var(--xp-window-text)" }}>
+                  Mood: {mood ? <span className="ml-1">{mood}</span> : <span className="ml-1 opacity-50">none</span>}
+                </label>
+                <div
+                  className="xp-inset flex flex-wrap gap-1 p-1"
+                  style={{ minHeight: "36px" }}
+                >
+                  {MOODS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setMood(mood === emoji ? null : emoji)}
+                      title={emoji}
+                      style={{
+                        fontSize: "18px",
+                        lineHeight: 1,
+                        padding: "2px 4px",
+                        cursor: "pointer",
+                        background: mood === emoji ? "var(--xp-accent)" : "transparent",
+                        border: mood === emoji ? "2px solid var(--xp-accent-dark)" : "2px solid transparent",
+                        borderRadius: "3px",
+                        opacity: mood && mood !== emoji ? 0.5 : 1,
+                        transition: "opacity 0.1s, border-color 0.1s",
+                      }}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="flex flex-col gap-1 flex-1 min-h-0">

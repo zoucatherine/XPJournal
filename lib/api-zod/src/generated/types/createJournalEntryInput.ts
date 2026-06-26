@@ -11,4 +11,6 @@ export interface CreateJournalEntryInput {
   date: string;
   title: string;
   body: string;
+  /** Mood emoji tag (e.g. 😊) */
+  mood?: string | null;
 }

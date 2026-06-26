@@ -114,6 +114,7 @@ function formatEntry(entry: typeof journalEntriesTable.$inferSelect) {
     date: entry.date,
     title: entry.title,
     body: entry.body,
+    mood: entry.mood ?? null,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
   };

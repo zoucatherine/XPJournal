@@ -11,6 +11,8 @@ export interface JournalEntry {
   date: string;
   title: string;
   body: string;
+  /** Mood emoji tag (e.g. 😊) */
+  mood?: string | null;
   createdAt: string;
   updatedAt: string;
 }
