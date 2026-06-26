@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "SXtsCGwXi71k6bhiIb4zO"
+uri = "file://artifacts/journal-mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
