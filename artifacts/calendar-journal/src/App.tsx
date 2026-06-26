@@ -24,6 +24,7 @@ import {
   getGetEntryQueryKey
 } from "@workspace/api-client-react";
 import { useTheme, THEMES, type ThemeId } from "./useTheme";
+import { useWallpaper, WallpaperProvider, WALLPAPERS } from "./useWallpaper";
 
 const queryClient = new QueryClient();
 
@@ -191,6 +192,202 @@ function ThemePicker() {
   );
 }
 
+function WallpaperPicker() {
+  const { wallpaperId, customImage, setWallpaper, setCustomImage, clearCustomImage } = useWallpaper();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      alert("Please choose an image under 3MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setCustomImage(dataUrl);
+      setOpen(false);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        title="Change wallpaper"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: "0 6px",
+          fontSize: "15px",
+          color: "white",
+          display: "flex",
+          alignItems: "center",
+          height: "21px",
+          opacity: 0.9,
+        }}
+      >
+        🖼️
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 2px)",
+            right: 0,
+            background: "var(--xp-window-bg)",
+            border: "2px outset var(--xp-border-light)",
+            borderRightColor: "var(--xp-border-dark)",
+            borderBottomColor: "var(--xp-border-dark)",
+            zIndex: 200,
+            minWidth: 190,
+            boxShadow: "2px 2px 6px rgba(0,0,0,0.4)",
+            padding: "4px 0",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontFamily: "Tahoma, sans-serif",
+              color: "var(--xp-window-text)",
+              padding: "2px 10px 6px",
+              opacity: 0.6,
+              borderBottom: "1px solid var(--xp-separator)",
+              marginBottom: 4,
+            }}
+          >
+            Desktop Wallpaper
+          </div>
+          {WALLPAPERS.filter(w => w.id !== "custom").map(w => (
+            <div
+              key={w.id}
+              onClick={() => { setWallpaper(w.id); setOpen(false); }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "5px 10px",
+                cursor: "pointer",
+                fontSize: 12,
+                color: "var(--xp-window-text)",
+                fontFamily: "Tahoma, sans-serif",
+                whiteSpace: "nowrap",
+                background: wallpaperId === w.id ? "var(--xp-accent)" : "transparent",
+                color: wallpaperId === w.id ? "white" : "var(--xp-window-text)",
+              } as React.CSSProperties}
+              onMouseEnter={e => {
+                if (wallpaperId !== w.id) {
+                  (e.currentTarget as HTMLDivElement).style.background = "var(--xp-calendar-hover)";
+                }
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.background =
+                  wallpaperId === w.id ? "var(--xp-accent)" : "transparent";
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 20,
+                  height: 14,
+                  background: w.preview,
+                  border: "1px solid #888",
+                  flexShrink: 0,
+                }}
+              />
+              {w.label}
+              {wallpaperId === w.id && " ✓"}
+            </div>
+          ))}
+          <div
+            style={{
+              borderTop: "1px solid var(--xp-separator)",
+              marginTop: 4,
+              paddingTop: 4,
+            }}
+          >
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "5px 10px",
+                cursor: "pointer",
+                fontSize: 12,
+                color: "var(--xp-window-text)",
+                fontFamily: "Tahoma, sans-serif",
+                whiteSpace: "nowrap",
+                background: wallpaperId === "custom" && customImage ? "var(--xp-accent)" : "transparent",
+                color: wallpaperId === "custom" && customImage ? "white" : "var(--xp-window-text)",
+              } as React.CSSProperties}
+              onMouseEnter={e => {
+                if (!(wallpaperId === "custom" && customImage)) {
+                  (e.currentTarget as HTMLDivElement).style.background = "var(--xp-calendar-hover)";
+                }
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.background =
+                  wallpaperId === "custom" && customImage ? "var(--xp-accent)" : "transparent";
+              }}
+            >
+              <span style={{ fontSize: 14, flexShrink: 0 }}>📁</span>
+              Browse…{wallpaperId === "custom" && customImage ? " ✓" : ""}
+            </div>
+            {wallpaperId === "custom" && customImage && (
+              <div
+                onClick={() => { clearCustomImage(); setOpen(false); }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "5px 10px",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  color: "var(--xp-window-text)",
+                  fontFamily: "Tahoma, sans-serif",
+                  whiteSpace: "nowrap",
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLDivElement).style.background = "var(--xp-calendar-hover)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLDivElement).style.background = "transparent";
+                }}
+              >
+                <span style={{ fontSize: 14, flexShrink: 0 }}>✕</span>
+                Remove Custom Image
+              </div>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SearchWindow({
   onClose,
   onSelectDate,
@@ -347,6 +544,7 @@ function Desktop() {
   const [showSearch, setShowSearch] = useState(false);
 
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
+  const { getDesktopStyle } = useWallpaper();
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
@@ -378,8 +576,10 @@ function Desktop() {
     return entry ? entry.title || "Entry" : null;
   };
 
+  const desktopStyle = getDesktopStyle();
+
   return (
-    <div className="min-h-screen w-full relative pb-[30px] overflow-hidden">
+    <div className="min-h-screen w-full relative pb-[30px] overflow-hidden" style={desktopStyle as React.CSSProperties}>
       {/* Main Calendar Window */}
       <div
         ref={windowRef}
@@ -417,6 +617,7 @@ function Desktop() {
             >
               🔍
             </button>
+            <WallpaperPicker />
             <ThemePicker />
             <div className="xp-btn-control xp-btn-min" />
             <div className="xp-btn-control xp-btn-max" />
@@ -716,11 +917,13 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
 function AppInner() {
   useTheme();
   return (
-    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-      <Switch>
-        <Route path="/" component={Desktop} />
-      </Switch>
-    </WouterRouter>
+    <WallpaperProvider>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <Switch>
+          <Route path="/" component={Desktop} />
+        </Switch>
+      </WouterRouter>
+    </WallpaperProvider>
   );
 }
 
