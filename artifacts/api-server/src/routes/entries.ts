@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { journalEntriesTable, insertJournalEntrySchema, updateJournalEntrySchema } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or, ilike } from "drizzle-orm";
 
 const entriesRouter = Router();
 
@@ -11,6 +11,25 @@ entriesRouter.get("/entries", async (_req, res) => {
     res.json(entries.map(formatEntry));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch entries" });
+  }
+});
+
+entriesRouter.get("/entries/search", async (req, res) => {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    if (!q) {
+      res.json([]);
+      return;
+    }
+    const pattern = `%${q}%`;
+    const entries = await db
+      .select()
+      .from(journalEntriesTable)
+      .where(or(ilike(journalEntriesTable.title, pattern), ilike(journalEntriesTable.body, pattern)))
+      .orderBy(journalEntriesTable.date);
+    res.json(entries.map(formatEntry));
+  } catch (err) {
+    res.status(500).json({ error: "Failed to search entries" });
   }
 });
 

@@ -18,6 +18,24 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * Returns entries whose title or body contains the query string (case-insensitive)
+ * @summary Search journal entries by keyword
+ */
+export const SearchEntriesQueryParams = zod.object({
+  "q": zod.coerce.string()
+})
+
+export const SearchEntriesResponseItem = zod.object({
+  "date": zod.string().describe('ISO date string (YYYY-MM-DD)'),
+  "title": zod.string(),
+  "body": zod.string(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const SearchEntriesResponse = zod.array(SearchEntriesResponseItem)
+
+
+/**
  * Returns all journal entries (date, title, and body)
  * @summary List all journal entries
  */

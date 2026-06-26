@@ -19,6 +19,7 @@ import {
   useCreateEntry,
   useUpdateEntry,
   useDeleteEntry,
+  useSearchEntries,
   getListEntriesQueryKey,
   getGetEntryQueryKey
 } from "@workspace/api-client-react";
@@ -190,10 +191,160 @@ function ThemePicker() {
   );
 }
 
+function SearchWindow({
+  onClose,
+  onSelectDate,
+}: {
+  onClose: () => void;
+  onSelectDate: (date: Date) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggableFixed();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data: results, isFetching } = useSearchEntries(
+    { q: debouncedQuery },
+    { query: { enabled: debouncedQuery.length > 0 } }
+  );
+
+  const getSnippet = (body: string, q: string) => {
+    const idx = body.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return body.slice(0, 80);
+    const start = Math.max(0, idx - 30);
+    const end = Math.min(body.length, idx + q.length + 50);
+    return (start > 0 ? "…" : "") + body.slice(start, end) + (end < body.length ? "…" : "");
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
+      <div
+        ref={windowRef}
+        className="w-full max-w-[520px] xp-window shadow-2xl z-50"
+        style={windowStyle}
+      >
+        <div
+          className="xp-titlebar"
+          onMouseDown={onTitlebarMouseDown}
+          style={{ cursor: "default", userSelect: "none" }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="w-4 h-4 inline-block border opacity-80"
+              style={{
+                backgroundColor: "var(--xp-border-light)",
+                borderColor: "var(--xp-accent-dark)",
+              }}
+            />
+            Search Journal
+          </div>
+          <div className="xp-titlebar-controls">
+            <div className="xp-btn-control xp-btn-close" onClick={onClose} />
+          </div>
+        </div>
+
+        <div className="xp-body flex flex-col gap-3" style={{ minHeight: 220 }}>
+          <div className="flex gap-2 items-center">
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="xp-inset xp-input flex-1"
+              placeholder="Type to search entries…"
+            />
+            {isFetching && (
+              <span className="text-xs font-sans" style={{ color: "var(--xp-window-text)", opacity: 0.6 }}>
+                …
+              </span>
+            )}
+          </div>
+
+          <div
+            className="xp-inset flex-1 overflow-y-auto"
+            style={{ minHeight: 140, maxHeight: 340 }}
+          >
+            {!debouncedQuery && (
+              <div className="p-4 text-center text-sm font-sans" style={{ color: "var(--xp-window-text)", opacity: 0.6 }}>
+                Enter a keyword to search your entries
+              </div>
+            )}
+            {debouncedQuery && results && results.length === 0 && !isFetching && (
+              <div className="p-4 text-center text-sm font-sans" style={{ color: "var(--xp-window-text)", opacity: 0.6 }}>
+                No entries found for "{debouncedQuery}"
+              </div>
+            )}
+            {results && results.length > 0 && (
+              <div>
+                {results.map((entry) => (
+                  <div
+                    key={entry.date}
+                    onClick={() => {
+                      const [year, month, day] = entry.date.split("-").map(Number);
+                      onSelectDate(new Date(year, month - 1, day));
+                      onClose();
+                    }}
+                    style={{
+                      borderBottom: "1px solid var(--xp-separator)",
+                      padding: "8px 10px",
+                      cursor: "pointer",
+                    }}
+                    className="search-result-row"
+                  >
+                    <div className="flex items-baseline gap-2">
+                      <span
+                        className="text-xs font-sans font-bold"
+                        style={{ color: "var(--xp-text-accent)", whiteSpace: "nowrap" }}
+                      >
+                        {entry.date}
+                      </span>
+                      <span
+                        className="text-sm font-sans font-bold truncate"
+                        style={{ color: "var(--xp-window-text)" }}
+                      >
+                        {entry.title || "(untitled)"}
+                      </span>
+                    </div>
+                    {entry.body && (
+                      <div
+                        className="text-xs font-sans mt-1"
+                        style={{ color: "var(--xp-window-text)", opacity: 0.75, lineHeight: 1.4 }}
+                      >
+                        {getSnippet(entry.body, debouncedQuery)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button className="xp-button min-w-[80px]" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function Desktop() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
+  const [showSearch, setShowSearch] = useState(false);
 
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
 
@@ -248,6 +399,24 @@ function Desktop() {
             My Journal
           </div>
           <div className="xp-titlebar-controls">
+            <button
+              title="Search entries"
+              onClick={() => setShowSearch(true)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "0 6px",
+                fontSize: "14px",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                height: "21px",
+                opacity: 0.9,
+              }}
+            >
+              🔍
+            </button>
             <ThemePicker />
             <div className="xp-btn-control xp-btn-min" />
             <div className="xp-btn-control xp-btn-max" />
@@ -333,6 +502,17 @@ function Desktop() {
           </div>
         </div>
       </div>
+
+      {/* Search Window */}
+      {showSearch && (
+        <SearchWindow
+          onClose={() => setShowSearch(false)}
+          onSelectDate={(date) => {
+            setSelectedDate(date);
+            setCurrentDate(date);
+          }}
+        />
+      )}
 
       {/* Entry Editor Modal Window */}
       {selectedDate && (

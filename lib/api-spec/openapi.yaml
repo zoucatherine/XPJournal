@@ -26,6 +26,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /entries/search:
+    get:
+      operationId: searchEntries
+      tags: [entries]
+      summary: Search journal entries by keyword
+      description: Returns entries whose title or body contains the query string (case-insensitive)
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            description: Keyword to search for
+      responses:
+        "200":
+          description: Matching entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JournalEntry"
   /entries:
     get:
       operationId: listEntries

@@ -704,3 +704,11 @@
 .xp-theme-option.selected {
   font-weight: bold;
 }
+
+/* Search result rows */
+.search-result-row:hover {
+  background: var(--xp-calendar-hover);
+}
+.search-result-row:last-child {
+  border-bottom: none !important;
+}

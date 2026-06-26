@@ -24,6 +24,7 @@ import type {
   ErrorResponse,
   HealthStatus,
   JournalEntry,
+  SearchEntriesParams,
   UpdateJournalEntryInput
 } from './api.schemas';
 
@@ -120,6 +121,91 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getHealthCheckQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSearchEntriesUrl = (params: SearchEntriesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/entries/search?${stringifiedParams}` : `/api/entries/search`
+}
+
+/**
+ * Returns entries whose title or body contains the query string (case-insensitive)
+ * @summary Search journal entries by keyword
+ */
+export const searchEntries = async (params: SearchEntriesParams, options?: RequestInit): Promise<JournalEntry[]> => {
+
+  return customFetch<JournalEntry[]>(getSearchEntriesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchEntriesQueryKey = (params?: SearchEntriesParams,) => {
+    return [
+    `/api/entries/search`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchEntriesQueryOptions = <TData = Awaited<ReturnType<typeof searchEntries>>, TError = ErrorType<unknown>>(params: SearchEntriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchEntriesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchEntries>>> = ({ signal }) => searchEntries(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchEntries>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof searchEntries>>>
+export type SearchEntriesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Search journal entries by keyword
+ */
+
+export function useSearchEntries<TData = Awaited<ReturnType<typeof searchEntries>>, TError = ErrorType<unknown>>(
+ params: SearchEntriesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchEntries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchEntriesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

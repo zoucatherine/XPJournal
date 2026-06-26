@@ -10,4 +10,5 @@ export * from './createJournalEntryInput';
 export * from './errorResponse';
 export * from './healthStatus';
 export * from './journalEntry';
+export * from './searchEntriesParams';
 export * from './updateJournalEntryInput';
