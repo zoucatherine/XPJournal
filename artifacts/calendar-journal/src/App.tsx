@@ -192,6 +192,285 @@ function useDraggableFixed(initialCenter = true) {
   return { windowRef, windowStyle, onTitlebarMouseDown };
 }
 
+function MenuRow({
+  icon,
+  label,
+  hasArrow,
+  active,
+  onClick,
+}: {
+  icon: string;
+  label: string;
+  hasArrow?: boolean;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const highlight = active || hovered;
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "7px 14px",
+        cursor: "pointer",
+        borderBottom: "1px solid var(--xp-separator)",
+        background: highlight ? "var(--xp-accent)" : "transparent",
+        color: highlight ? "white" : "var(--xp-window-text)",
+        userSelect: "none",
+      }}
+    >
+      <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
+      <span style={{ flex: 1, fontSize: 12, fontFamily: "Tahoma, sans-serif" }}>{label}</span>
+      {hasArrow && (
+        <span style={{ fontSize: 9, opacity: 0.75 }}>{active ? "▼" : "▶"}</span>
+      )}
+    </div>
+  );
+}
+
+function StartMenu({
+  onClose,
+  onOpenSearch,
+}: {
+  onClose: () => void;
+  onOpenSearch: () => void;
+}) {
+  const { theme, setTheme } = useTheme();
+  const { wallpaperId, customImage, setWallpaper, setCustomImage, clearCustomImage } = useWallpaper();
+  const [expanded, setExpanded] = useState<"theme" | "wallpaper" | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { alert("Please choose an image under 3MB."); return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setCustomImage(ev.target?.result as string);
+      onClose();
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const toggle = (panel: "theme" | "wallpaper") =>
+    setExpanded(prev => (prev === panel ? null : panel));
+
+  const subRowStyle = (selected: boolean): React.CSSProperties => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "5px 14px 5px 42px",
+    cursor: "pointer",
+    fontSize: 12,
+    fontFamily: "Tahoma, sans-serif",
+    background: selected ? "var(--xp-accent)" : "transparent",
+    color: selected ? "white" : "var(--xp-window-text)",
+    userSelect: "none",
+  });
+
+  return (
+    <div
+      ref={menuRef}
+      style={{
+        position: "fixed",
+        bottom: 30,
+        left: 0,
+        width: 260,
+        background: "var(--xp-window-bg)",
+        border: "2px outset var(--xp-border-light)",
+        borderRightColor: "var(--xp-border-dark)",
+        borderBottomColor: "var(--xp-border-dark)",
+        boxShadow: "3px -3px 10px rgba(0,0,0,0.5)",
+        zIndex: 2000,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(to right, var(--xp-titlebar-from) 0%, var(--xp-titlebar-to) 100%)",
+          padding: "10px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          borderBottom: "2px solid var(--xp-accent-dark)",
+        }}
+      >
+        <span style={{ fontSize: 26, lineHeight: 1 }}>📓</span>
+        <div>
+          <div
+            style={{
+              color: "white",
+              fontWeight: "bold",
+              fontSize: 13,
+              fontFamily: "Tahoma, sans-serif",
+              textShadow: "1px 1px var(--xp-titlebar-shadow)",
+            }}
+          >
+            My Journal
+          </div>
+          <div
+            style={{
+              color: "rgba(255,255,255,0.7)",
+              fontSize: 10,
+              fontFamily: "Tahoma, sans-serif",
+            }}
+          >
+            Personal diary
+          </div>
+        </div>
+      </div>
+
+      <MenuRow icon="🔍" label="Search Entries" onClick={() => { onOpenSearch(); onClose(); }} />
+
+      <MenuRow
+        icon="🎨"
+        label="Change Theme"
+        hasArrow
+        active={expanded === "theme"}
+        onClick={() => toggle("theme")}
+      />
+      {expanded === "theme" && (
+        <div style={{ borderBottom: "1px solid var(--xp-separator)" }}>
+          {THEMES.map(t => (
+            <div
+              key={t.id}
+              style={subRowStyle(theme === t.id)}
+              onClick={() => setTheme(t.id as ThemeId)}
+              onMouseEnter={e => {
+                if (theme !== t.id)
+                  (e.currentTarget as HTMLDivElement).style.background = "var(--xp-calendar-hover)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.background =
+                  theme === t.id ? "var(--xp-accent)" : "transparent";
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 13,
+                  height: 13,
+                  background: t.preview,
+                  border: "1px solid #888",
+                  flexShrink: 0,
+                }}
+              />
+              {t.label}
+              {theme === t.id && " ✓"}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <MenuRow
+        icon="🖼️"
+        label="Change Wallpaper"
+        hasArrow
+        active={expanded === "wallpaper"}
+        onClick={() => toggle("wallpaper")}
+      />
+      {expanded === "wallpaper" && (
+        <div style={{ borderBottom: "1px solid var(--xp-separator)" }}>
+          {WALLPAPERS.filter(w => w.id !== "custom").map(w => (
+            <div
+              key={w.id}
+              style={subRowStyle(wallpaperId === w.id)}
+              onClick={() => { setWallpaper(w.id); onClose(); }}
+              onMouseEnter={e => {
+                if (wallpaperId !== w.id)
+                  (e.currentTarget as HTMLDivElement).style.background = "var(--xp-calendar-hover)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.background =
+                  wallpaperId === w.id ? "var(--xp-accent)" : "transparent";
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 18,
+                  height: 13,
+                  background: w.preview,
+                  border: "1px solid #888",
+                  flexShrink: 0,
+                }}
+              />
+              {w.label}
+              {wallpaperId === w.id && " ✓"}
+            </div>
+          ))}
+          <div
+            style={subRowStyle(wallpaperId === "custom" && !!customImage)}
+            onClick={() => fileInputRef.current?.click()}
+            onMouseEnter={e => {
+              if (!(wallpaperId === "custom" && customImage))
+                (e.currentTarget as HTMLDivElement).style.background = "var(--xp-calendar-hover)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLDivElement).style.background =
+                wallpaperId === "custom" && customImage ? "var(--xp-accent)" : "transparent";
+            }}
+          >
+            <span style={{ fontSize: 14, flexShrink: 0 }}>📁</span>
+            Browse…{wallpaperId === "custom" && customImage ? " ✓" : ""}
+          </div>
+          {wallpaperId === "custom" && customImage && (
+            <div
+              style={subRowStyle(false)}
+              onClick={() => { clearCustomImage(); onClose(); }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "var(--xp-calendar-hover)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "transparent"; }}
+            >
+              <span style={{ fontSize: 13, flexShrink: 0 }}>✕</span>
+              Remove Custom Image
+            </div>
+          )}
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileChange} />
+        </div>
+      )}
+
+      <div
+        style={{
+          borderTop: "2px solid var(--xp-separator)",
+          padding: "6px 14px",
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
+        <div
+          onClick={onClose}
+          style={{
+            fontSize: 11,
+            fontFamily: "Tahoma, sans-serif",
+            color: "var(--xp-window-text)",
+            cursor: "pointer",
+            opacity: 0.6,
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.opacity = "1"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.opacity = "0.6"; }}
+        >
+          Close ✕
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ThemePicker() {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -346,7 +625,6 @@ function WallpaperPicker() {
                 padding: "5px 10px",
                 cursor: "pointer",
                 fontSize: 12,
-                color: "var(--xp-window-text)",
                 fontFamily: "Tahoma, sans-serif",
                 whiteSpace: "nowrap",
                 background: wallpaperId === w.id ? "var(--xp-accent)" : "transparent",
@@ -392,7 +670,6 @@ function WallpaperPicker() {
                 padding: "5px 10px",
                 cursor: "pointer",
                 fontSize: 12,
-                color: "var(--xp-window-text)",
                 fontFamily: "Tahoma, sans-serif",
                 whiteSpace: "nowrap",
                 background: wallpaperId === "custom" && customImage ? "var(--xp-accent)" : "transparent",
@@ -604,6 +881,7 @@ function Desktop() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
   const [showSearch, setShowSearch] = useState(false);
+  const [showStartMenu, setShowStartMenu] = useState(false);
 
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
   const { getDesktopStyle } = useWallpaper();
@@ -797,10 +1075,22 @@ function Desktop() {
         />
       )}
 
+      {/* Start Menu */}
+      {showStartMenu && (
+        <StartMenu
+          onClose={() => setShowStartMenu(false)}
+          onOpenSearch={() => { setShowSearch(true); setShowStartMenu(false); }}
+        />
+      )}
+
       {/* Taskbar */}
       <div className="xp-taskbar">
         <div className="flex h-full">
-          <div className="xp-start-btn">
+          <div
+            className="xp-start-btn"
+            onClick={() => setShowStartMenu(v => !v)}
+            style={{ cursor: "pointer" }}
+          >
             <span className="text-lg italic tracking-tighter">start</span>
           </div>
           <div className="xp-tray">
