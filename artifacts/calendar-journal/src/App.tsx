@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -26,6 +26,108 @@ import { useTheme, THEMES, type ThemeId } from "./useTheme";
 
 const queryClient = new QueryClient();
 
+interface DragPos { x: number; y: number }
+
+function useDraggable(storageKey?: string) {
+  const windowRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const dragOffset = useRef<DragPos>({ x: 0, y: 0 });
+
+  const getStoredPos = (): DragPos | null => {
+    if (!storageKey) return null;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return JSON.parse(raw) as DragPos;
+    } catch {}
+    return null;
+  };
+
+  const [pos, setPos] = useState<DragPos | null>(getStoredPos);
+
+  const onTitlebarMouseDown = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest(".xp-btn-control") || target.closest(".xp-theme-dropdown") || target.tagName === "BUTTON") return;
+    const el = windowRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    isDragging.current = true;
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    e.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !windowRef.current) return;
+      const el = windowRef.current;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const x = Math.max(0, Math.min(e.clientX - dragOffset.current.x, vw - el.offsetWidth));
+      const y = Math.max(0, Math.min(e.clientY - dragOffset.current.y, vh - el.offsetHeight - 32));
+      const newPos = { x, y };
+      setPos(newPos);
+      if (storageKey) {
+        try { localStorage.setItem(storageKey, JSON.stringify(newPos)); } catch {}
+      }
+    };
+    const onMouseUp = () => { isDragging.current = false; };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [storageKey]);
+
+  const windowStyle: React.CSSProperties = pos
+    ? { position: "absolute", left: pos.x, top: pos.y }
+    : { position: "absolute", top: "5%", left: "50%", transform: "translateX(-50%)" };
+
+  return { pos, windowRef, windowStyle, onTitlebarMouseDown };
+}
+
+function useDraggableFixed(initialCenter = true) {
+  const windowRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const dragOffset = useRef<DragPos>({ x: 0, y: 0 });
+  const [pos, setPos] = useState<DragPos | null>(null);
+
+  const onTitlebarMouseDown = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest(".xp-btn-control") || target.tagName === "BUTTON") return;
+    const el = windowRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    isDragging.current = true;
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    e.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !windowRef.current) return;
+      const el = windowRef.current;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const x = Math.max(0, Math.min(e.clientX - dragOffset.current.x, vw - el.offsetWidth));
+      const y = Math.max(0, Math.min(e.clientY - dragOffset.current.y, vh - el.offsetHeight - 32));
+      setPos({ x, y });
+    };
+    const onMouseUp = () => { isDragging.current = false; };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  const windowStyle: React.CSSProperties = pos
+    ? { position: "fixed", left: pos.x, top: pos.y }
+    : { position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+
+  return { windowRef, windowStyle, onTitlebarMouseDown };
+}
+
 function ThemePicker() {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -34,9 +136,7 @@ function ThemePicker() {
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -95,6 +195,8 @@ function Desktop() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
 
+  const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
+
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
@@ -128,8 +230,16 @@ function Desktop() {
   return (
     <div className="min-h-screen w-full relative pb-[30px] overflow-hidden">
       {/* Main Calendar Window */}
-      <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-full max-w-[800px] xp-window shadow-xl">
-        <div className="xp-titlebar">
+      <div
+        ref={windowRef}
+        className="w-full max-w-[800px] xp-window shadow-xl"
+        style={windowStyle}
+      >
+        <div
+          className="xp-titlebar"
+          onMouseDown={onTitlebarMouseDown}
+          style={{ cursor: "default", userSelect: "none" }}
+        >
           <div className="flex items-center gap-2">
             <span
               className="w-4 h-4 inline-block border border-white opacity-50"
@@ -254,6 +364,7 @@ function Desktop() {
 
 function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   const dateStr = format(date, "yyyy-MM-dd");
+  const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggableFixed();
 
   const { data: entry, isLoading } = useGetEntry(dateStr, {
     query: {
@@ -335,8 +446,16 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
       <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
 
       {/* Window */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] xp-window shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200">
-        <div className="xp-titlebar">
+      <div
+        ref={windowRef}
+        className="w-full max-w-[600px] xp-window shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200"
+        style={windowStyle}
+      >
+        <div
+          className="xp-titlebar"
+          onMouseDown={onTitlebarMouseDown}
+          style={{ cursor: "default", userSelect: "none" }}
+        >
           <div className="flex items-center gap-2">
             <span
               className="w-4 h-4 inline-block border opacity-80"
@@ -348,6 +467,8 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
             Journal &mdash; {format(date, "MMMM d, yyyy")}
           </div>
           <div className="xp-titlebar-controls">
+            <div className="xp-btn-control xp-btn-min" />
+            <div className="xp-btn-control xp-btn-max" />
             <div className="xp-btn-control xp-btn-close" onClick={onClose} />
           </div>
         </div>
