@@ -876,12 +876,131 @@ function SearchWindow({
   );
 }
 
+interface ContextMenuState {
+  day: Date;
+  x: number;
+  y: number;
+}
+
+function ContextMenu({
+  menu,
+  entryExists,
+  onNewEntry,
+  onOpenEntry,
+  onCopyDate,
+  onClose,
+}: {
+  menu: ContextMenuState;
+  entryExists: boolean;
+  onNewEntry: () => void;
+  onOpenEntry: () => void;
+  onCopyDate: () => void;
+  onClose: () => void;
+}) {
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    const handleMouseDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [onClose]);
+
+  const menuStyle: React.CSSProperties = {
+    position: "fixed",
+    left: menu.x,
+    top: menu.y,
+    zIndex: 9999,
+    backgroundColor: "#d4d0c8",
+    border: "2px solid",
+    borderColor: "#ffffff #808080 #808080 #ffffff",
+    boxShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+    minWidth: 140,
+    padding: "2px 0",
+    fontFamily: "Tahoma, sans-serif",
+    fontSize: 12,
+  };
+
+  const itemBase: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "4px 20px 4px 24px",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    userSelect: "none",
+  };
+
+  return (
+    <div ref={menuRef} style={menuStyle} onContextMenu={e => e.preventDefault()}>
+      <ContextMenuItem
+        label="📝 New Entry"
+        style={itemBase}
+        onClick={() => { onClose(); onNewEntry(); }}
+      />
+      <ContextMenuItem
+        label="📖 Open Entry"
+        style={itemBase}
+        disabled={!entryExists}
+        onClick={() => { if (entryExists) { onClose(); onOpenEntry(); } }}
+      />
+      <div style={{ borderTop: "1px solid #808080", borderBottom: "1px solid #ffffff", margin: "2px 0" }} />
+      <ContextMenuItem
+        label="📋 Copy Date"
+        style={itemBase}
+        onClick={() => { onClose(); onCopyDate(); }}
+      />
+    </div>
+  );
+}
+
+function ContextMenuItem({
+  label,
+  style,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  style: React.CSSProperties;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      style={{
+        ...style,
+        background: hovered && !disabled ? "#0a246a" : "transparent",
+        color: disabled ? "#808080" : hovered ? "#ffffff" : "#000000",
+        cursor: disabled ? "default" : "pointer",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onClick}
+    >
+      {label}
+    </div>
+  );
+}
+
 function Desktop() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
   const [showSearch, setShowSearch] = useState(false);
   const [showStartMenu, setShowStartMenu] = useState(false);
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [copyToast, setCopyToast] = useState(false);
 
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
   const { getDesktopStyle } = useWallpaper();
@@ -997,6 +1116,10 @@ function Desktop() {
                 <div
                   key={idx}
                   onClick={() => setSelectedDate(day)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenu({ day, x: e.clientX, y: e.clientY });
+                  }}
                   className={`
                     xp-calendar-day h-24 p-1 flex flex-col
                     ${!isCurrentMonth ? "other-month" : ""}
@@ -1035,6 +1158,47 @@ function Desktop() {
           </div>
         </div>
       </div>
+
+      {/* Right-click Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          menu={contextMenu}
+          entryExists={hasEntry(contextMenu.day)}
+          onNewEntry={() => setSelectedDate(contextMenu.day)}
+          onOpenEntry={() => setSelectedDate(contextMenu.day)}
+          onCopyDate={() => {
+            const label = format(contextMenu.day, "MMMM d, yyyy");
+            navigator.clipboard.writeText(label).then(() => {
+              setCopyToast(true);
+              setTimeout(() => setCopyToast(false), 2000);
+            });
+          }}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {/* Copy Date Toast */}
+      {copyToast && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 48,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 10000,
+            backgroundColor: "#d4d0c8",
+            border: "2px solid",
+            borderColor: "#ffffff #808080 #808080 #ffffff",
+            padding: "6px 16px",
+            fontFamily: "Tahoma, sans-serif",
+            fontSize: 12,
+            boxShadow: "2px 2px 4px rgba(0,0,0,0.4)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          📋 Date copied to clipboard
+        </div>
+      )}
 
       {/* Search Window */}
       {showSearch && (
