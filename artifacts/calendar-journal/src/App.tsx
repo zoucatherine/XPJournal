@@ -945,26 +945,6 @@ function Desktop() {
             My Journal
           </div>
           <div className="xp-titlebar-controls">
-            <button
-              title="Search entries"
-              onClick={() => setShowSearch(true)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "0 6px",
-                fontSize: "14px",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                height: "21px",
-                opacity: 0.9,
-              }}
-            >
-              🔍
-            </button>
-            <WallpaperPicker />
-            <ThemePicker />
             <div className="xp-btn-control xp-btn-min" />
             <div className="xp-btn-control xp-btn-max" />
             <div className="xp-btn-control xp-btn-close" />
