@@ -93,17 +93,22 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-:root {
-  --background: 175 40% 45%; /* XP teal desktop */
+/* =============================================
+   XP THEME VARIABLES (default = xp-blue)
+   ============================================= */
+:root,
+[data-theme="xp-blue"] {
+  /* Tailwind color tokens */
+  --background: 175 40% 45%;
   --foreground: 0 0% 0%;
   --border: 0 0% 50%;
-  --card: 50 16% 88%; /* #ECE9D8 XP silver */
+  --card: 50 16% 88%;
   --card-foreground: 0 0% 0%;
   --card-border: 0 0% 50%;
   --popover: 50 16% 88%;
   --popover-foreground: 0 0% 0%;
   --popover-border: 0 0% 50%;
-  --primary: 218 82% 23%; /* #0A246A */
+  --primary: 218 82% 23%;
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 80%;
   --secondary-foreground: 0 0% 0%;
@@ -132,7 +137,6 @@
   --app-font-serif: Georgia, serif;
   --app-font-mono: "Courier New", Courier, monospace;
   --radius: 0;
-
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
   --shadow-sm: 2px 2px 5px rgba(0,0,0,0.3);
@@ -141,20 +145,241 @@
   --shadow-lg: 5px 5px 15px rgba(0,0,0,0.5);
   --shadow-xl: 10px 10px 20px rgba(0,0,0,0.5);
   --shadow-2xl: 15px 15px 25px rgba(0,0,0,0.5);
+
+  /* XP-specific theme variables */
+  --xp-titlebar-from: #0A246A;
+  --xp-titlebar-to: #A6CAF0;
+  --xp-titlebar-shadow: #0A246A;
+  --xp-window-bg: #ECE9D8;
+  --xp-window-border: #0055EA;
+  --xp-window-text: #000000;
+  --xp-border-light: #FFFFFF;
+  --xp-border-dark: #848280;
+  --xp-taskbar: linear-gradient(to bottom, #245EDC 0%, #3F8CF3 9%, #245EDC 18%, #245EDC 92%, #333333 100%);
+  --xp-start-btn: linear-gradient(to bottom, #3C8B3C 0%, #59A859 9%, #3C8B3C 18%, #3C8B3C 92%, #2B662B 100%);
+  --xp-start-btn-active: linear-gradient(to bottom, #2B662B 0%, #3C8B3C 100%);
+  --xp-tray: linear-gradient(to bottom, #1E4CB4 0%, #153A90 100%);
+  --xp-tray-active: linear-gradient(to bottom, #153A90 0%, #1E4CB4 100%);
+  --xp-clock: linear-gradient(to bottom, #1290E9 0%, #19B9F3 9%, #1290E9 18%, #1290E9 92%, #0B5B9E 100%);
+  --xp-accent: #0055EA;
+  --xp-accent-dark: #0A246A;
+  --xp-text-accent: #0A246A;
+  --xp-calendar-bg: #FFFFFF;
+  --xp-calendar-text: #000000;
+  --xp-calendar-other-bg: #F5F5F5;
+  --xp-calendar-other-text: #ACA899;
+  --xp-calendar-today-bg: #E3F2FD;
+  --xp-calendar-today-border: #0055EA;
+  --xp-calendar-hover: #F0F8FF;
+  --xp-scrollbar-track: #DFDFDF;
+  --xp-scrollbar-thumb: #ECE9D8;
+  --xp-weekday-bg: #ECE9D8;
+  --xp-grid-bg: #848280;
+  --xp-separator: #848280;
+  --xp-separator-light: #FFFFFF;
+  --xp-btn-ctrl: linear-gradient(to bottom, #74A5E8 0%, #4088D8 50%, #2671C4 50%, #5394E3 100%);
+}
+
+/* =============================================
+   WIN98 CLASSIC THEME
+   ============================================= */
+[data-theme="win98"] {
+  --background: 180 100% 25%;
+  --foreground: 0 0% 0%;
+  --border: 0 0% 50%;
+  --card: 0 0% 83%;
+  --card-foreground: 0 0% 0%;
+  --card-border: 0 0% 50%;
+  --popover: 0 0% 83%;
+  --popover-foreground: 0 0% 0%;
+  --popover-border: 0 0% 50%;
+  --primary: 240 100% 25%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 75%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 80%;
+  --muted-foreground: 0 0% 30%;
+  --accent: 240 100% 25%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 240 100% 25%;
+  --app-font-sans: "MS Sans Serif", Tahoma, sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: "Courier New", Courier, monospace;
+  --radius: 0;
+
+  --xp-titlebar-from: #000080;
+  --xp-titlebar-to: #1084D0;
+  --xp-titlebar-shadow: #000040;
+  --xp-window-bg: #D4D0C8;
+  --xp-window-border: #000080;
+  --xp-window-text: #000000;
+  --xp-border-light: #FFFFFF;
+  --xp-border-dark: #808080;
+  --xp-taskbar: linear-gradient(to bottom, #C0C0C0 0%, #D4D0C8 9%, #C0C0C0 18%, #C0C0C0 92%, #808080 100%);
+  --xp-start-btn: linear-gradient(to bottom, #C0C0C0 0%, #D4D0C8 9%, #C0C0C0 18%, #C0C0C0 92%, #808080 100%);
+  --xp-start-btn-active: linear-gradient(to bottom, #808080 0%, #C0C0C0 100%);
+  --xp-tray: linear-gradient(to bottom, #A8A8A8 0%, #989898 100%);
+  --xp-tray-active: linear-gradient(to bottom, #989898 0%, #A8A8A8 100%);
+  --xp-clock: linear-gradient(to bottom, #A8A8A8 0%, #989898 100%);
+  --xp-accent: #000080;
+  --xp-accent-dark: #000060;
+  --xp-text-accent: #000080;
+  --xp-calendar-bg: #FFFFFF;
+  --xp-calendar-text: #000000;
+  --xp-calendar-other-bg: #F0F0F0;
+  --xp-calendar-other-text: #909090;
+  --xp-calendar-today-bg: #C8D8F8;
+  --xp-calendar-today-border: #000080;
+  --xp-calendar-hover: #E8E8F8;
+  --xp-scrollbar-track: #D4D0C8;
+  --xp-scrollbar-thumb: #C0C0C0;
+  --xp-weekday-bg: #D4D0C8;
+  --xp-grid-bg: #808080;
+  --xp-separator: #808080;
+  --xp-separator-light: #FFFFFF;
+  --xp-btn-ctrl: linear-gradient(to bottom, #C0C0C0 0%, #A8A8A8 50%, #909090 50%, #B8B8B8 100%);
+}
+
+/* =============================================
+   LUNA GREEN THEME
+   ============================================= */
+[data-theme="luna"] {
+  --background: 100 35% 32%;
+  --foreground: 0 0% 0%;
+  --border: 0 0% 50%;
+  --card: 48 30% 87%;
+  --card-foreground: 0 0% 0%;
+  --card-border: 0 0% 50%;
+  --popover: 48 30% 87%;
+  --popover-foreground: 0 0% 0%;
+  --popover-border: 0 0% 50%;
+  --primary: 100 55% 20%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 80%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 85%;
+  --muted-foreground: 0 0% 30%;
+  --accent: 100 45% 35%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 100 45% 35%;
+  --app-font-sans: Tahoma, "Trebuchet MS", sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: "Courier New", Courier, monospace;
+  --radius: 0;
+
+  --xp-titlebar-from: #2D5016;
+  --xp-titlebar-to: #90B874;
+  --xp-titlebar-shadow: #1A3A08;
+  --xp-window-bg: #EDE8D0;
+  --xp-window-border: #4A7820;
+  --xp-window-text: #000000;
+  --xp-border-light: #FFFFFF;
+  --xp-border-dark: #7A8070;
+  --xp-taskbar: linear-gradient(to bottom, #4A7820 0%, #6B9E38 9%, #4A7820 18%, #4A7820 92%, #2D4A10 100%);
+  --xp-start-btn: linear-gradient(to bottom, #4A8020 0%, #6AAA38 9%, #4A8020 18%, #4A8020 92%, #2D5010 100%);
+  --xp-start-btn-active: linear-gradient(to bottom, #2D5010 0%, #4A8020 100%);
+  --xp-tray: linear-gradient(to bottom, #3A6018 0%, #2D4A10 100%);
+  --xp-tray-active: linear-gradient(to bottom, #2D4A10 0%, #3A6018 100%);
+  --xp-clock: linear-gradient(to bottom, #5A9030 0%, #7AB848 9%, #5A9030 18%, #5A9030 92%, #3A6018 100%);
+  --xp-accent: #4A7820;
+  --xp-accent-dark: #2D5016;
+  --xp-text-accent: #2D5016;
+  --xp-calendar-bg: #FFFFFF;
+  --xp-calendar-text: #000000;
+  --xp-calendar-other-bg: #F4F2E8;
+  --xp-calendar-other-text: #8A9080;
+  --xp-calendar-today-bg: #D8F0C8;
+  --xp-calendar-today-border: #4A7820;
+  --xp-calendar-hover: #EEF8E8;
+  --xp-scrollbar-track: #DDDAB0;
+  --xp-scrollbar-thumb: #EDE8D0;
+  --xp-weekday-bg: #EDE8D0;
+  --xp-grid-bg: #7A8070;
+  --xp-separator: #7A8070;
+  --xp-separator-light: #FFFFFF;
+  --xp-btn-ctrl: linear-gradient(to bottom, #74A874 0%, #4A8840 50%, #2A6820 50%, #5A9850 100%);
+}
+
+/* =============================================
+   ZUNE DARK THEME
+   ============================================= */
+[data-theme="zune"] {
+  --background: 0 0% 12%;
+  --foreground: 0 0% 90%;
+  --border: 0 0% 30%;
+  --card: 270 30% 18%;
+  --card-foreground: 0 0% 90%;
+  --card-border: 0 0% 30%;
+  --popover: 270 30% 18%;
+  --popover-foreground: 0 0% 90%;
+  --popover-border: 0 0% 30%;
+  --primary: 280 60% 45%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 28%;
+  --secondary-foreground: 0 0% 90%;
+  --muted: 0 0% 22%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 280 60% 45%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 0 0% 20%;
+  --ring: 280 60% 45%;
+  --app-font-sans: Tahoma, "Trebuchet MS", sans-serif;
+  --app-font-serif: Georgia, serif;
+  --app-font-mono: "Courier New", Courier, monospace;
+  --radius: 0;
+
+  --xp-titlebar-from: #2D1B4E;
+  --xp-titlebar-to: #7B4AAB;
+  --xp-titlebar-shadow: #1A0A2E;
+  --xp-window-bg: #2A2A3A;
+  --xp-window-border: #7B4AAB;
+  --xp-window-text: #E0E0E0;
+  --xp-border-light: #555566;
+  --xp-border-dark: #111120;
+  --xp-taskbar: linear-gradient(to bottom, #1A0A2E 0%, #2D1B4E 9%, #1A0A2E 18%, #1A0A2E 92%, #0A0518 100%);
+  --xp-start-btn: linear-gradient(to bottom, #6B0A8B 0%, #8B2AAB 9%, #6B0A8B 18%, #6B0A8B 92%, #4A0060 100%);
+  --xp-start-btn-active: linear-gradient(to bottom, #4A0060 0%, #6B0A8B 100%);
+  --xp-tray: linear-gradient(to bottom, #2D1B4E 0%, #1A0A2E 100%);
+  --xp-tray-active: linear-gradient(to bottom, #1A0A2E 0%, #2D1B4E 100%);
+  --xp-clock: linear-gradient(to bottom, #4A1A6B 0%, #6B2A8B 9%, #4A1A6B 18%, #4A1A6B 92%, #2A0A48 100%);
+  --xp-accent: #9B4ACB;
+  --xp-accent-dark: #6B0A8B;
+  --xp-text-accent: #BB7AEB;
+  --xp-calendar-bg: #333344;
+  --xp-calendar-text: #E0E0E0;
+  --xp-calendar-other-bg: #252535;
+  --xp-calendar-other-text: #666677;
+  --xp-calendar-today-bg: #3A1A5A;
+  --xp-calendar-today-border: #9B4ACB;
+  --xp-calendar-hover: #3E3E55;
+  --xp-scrollbar-track: #1E1E2E;
+  --xp-scrollbar-thumb: #2A2A3A;
+  --xp-weekday-bg: #2A2A3A;
+  --xp-grid-bg: #111120;
+  --xp-separator: #444455;
+  --xp-separator-light: #555566;
+  --xp-btn-ctrl: linear-gradient(to bottom, #7B4AAB 0%, #5A2A88 50%, #3A1A68 50%, #6A3A98 100%);
 }
 
 .dark {
-  /* No dark mode for XP theme */
-  --background: 175 40% 45%; /* XP teal desktop */
+  --background: 175 40% 45%;
   --foreground: 0 0% 0%;
   --border: 0 0% 50%;
-  --card: 50 16% 88%; /* #ECE9D8 XP silver */
+  --card: 50 16% 88%;
   --card-foreground: 0 0% 0%;
   --card-border: 0 0% 50%;
   --popover: 50 16% 88%;
   --popover-foreground: 0 0% 0%;
   --popover-border: 0 0% 50%;
-  --primary: 218 82% 23%; /* #0A246A */
+  --primary: 218 82% 23%;
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 80%;
   --secondary-foreground: 0 0% 0%;
@@ -179,10 +404,12 @@
   }
 }
 
-/* XP UI Components */
+/* =============================================
+   XP UI Components — use CSS variables
+   ============================================= */
 .xp-window {
-  background-color: #ECE9D8;
-  border: 1px solid #0055EA;
+  background-color: var(--xp-window-bg);
+  border: 1px solid var(--xp-window-border);
   border-radius: 8px 8px 3px 3px;
   box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
   overflow: hidden;
@@ -191,7 +418,7 @@
 }
 
 .xp-titlebar {
-  background: linear-gradient(to right, #0A246A 0%, #A6CAF0 100%);
+  background: linear-gradient(to right, var(--xp-titlebar-from) 0%, var(--xp-titlebar-to) 100%);
   color: white;
   padding: 3px 5px 3px 5px;
   font-weight: bold;
@@ -199,14 +426,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #ECE9D8;
-  text-shadow: 1px 1px #0A246A;
+  border-bottom: 1px solid var(--xp-window-bg);
+  text-shadow: 1px 1px var(--xp-titlebar-shadow);
   user-select: none;
 }
 
 .xp-titlebar-controls {
   display: flex;
   gap: 2px;
+  align-items: center;
 }
 
 .xp-btn-control {
@@ -238,7 +466,7 @@
 }
 
 .xp-btn-max, .xp-btn-min {
-  background: linear-gradient(to bottom, #74A5E8 0%, #4088D8 50%, #2671C4 50%, #5394E3 100%);
+  background: var(--xp-btn-ctrl);
   border-color: #F8F7F6;
 }
 .xp-btn-max:active, .xp-btn-min:active {
@@ -268,15 +496,17 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  background-color: var(--xp-window-bg);
+  color: var(--xp-window-text);
 }
 
 .xp-button {
-  background: #ECE9D8;
-  border: 2px outset #FFFFFF;
-  border-right-color: #848280;
-  border-bottom-color: #848280;
+  background: var(--xp-window-bg);
+  border: 2px outset var(--xp-border-light);
+  border-right-color: var(--xp-border-dark);
+  border-bottom-color: var(--xp-border-dark);
   padding: 4px 12px;
-  color: black;
+  color: var(--xp-window-text);
   font-family: Tahoma, sans-serif;
   font-size: 13px;
   cursor: pointer;
@@ -287,16 +517,16 @@
   padding: 5px 11px 3px 13px;
 }
 .xp-button:disabled {
-  color: #ACA899;
-  text-shadow: 1px 1px white;
+  color: var(--xp-border-dark);
+  text-shadow: 1px 1px var(--xp-border-light);
 }
 
 .xp-inset {
-  background: white;
-  border: 2px inset #FFFFFF;
-  border-left-color: #848280;
-  border-top-color: #848280;
-  color: black;
+  background: var(--xp-calendar-bg);
+  border: 2px inset var(--xp-border-light);
+  border-left-color: var(--xp-border-dark);
+  border-top-color: var(--xp-border-dark);
+  color: var(--xp-calendar-text);
 }
 
 .xp-input {
@@ -321,7 +551,7 @@
   left: 0;
   right: 0;
   height: 30px;
-  background: linear-gradient(to bottom, #245EDC 0%, #3F8CF3 9%, #245EDC 18%, #245EDC 92%, #333333 100%);
+  background: var(--xp-taskbar);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -330,7 +560,7 @@
 
 .xp-start-btn {
   height: 100%;
-  background: linear-gradient(to bottom, #3C8B3C 0%, #59A859 9%, #3C8B3C 18%, #3C8B3C 92%, #2B662B 100%);
+  background: var(--xp-start-btn);
   color: white;
   font-weight: bold;
   font-style: italic;
@@ -345,7 +575,7 @@
   cursor: pointer;
 }
 .xp-start-btn:active {
-  background: linear-gradient(to bottom, #2B662B 0%, #3C8B3C 100%);
+  background: var(--xp-start-btn-active);
 }
 
 .xp-tray {
@@ -355,7 +585,7 @@
 }
 
 .xp-tray-item {
-  background: linear-gradient(to bottom, #1E4CB4 0%, #153A90 100%);
+  background: var(--xp-tray);
   color: white;
   height: 100%;
   padding: 0 10px;
@@ -367,13 +597,13 @@
   cursor: pointer;
 }
 .xp-tray-item.active {
-  background: linear-gradient(to bottom, #153A90 0%, #1E4CB4 100%);
+  background: var(--xp-tray-active);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
 }
 
 .xp-clock-area {
   height: 100%;
-  background: linear-gradient(to bottom, #1290E9 0%, #19B9F3 9%, #1290E9 18%, #1290E9 92%, #0B5B9E 100%);
+  background: var(--xp-clock);
   color: white;
   display: flex;
   align-items: center;
@@ -384,30 +614,31 @@
 }
 
 .xp-calendar-day {
-  background: #FFFFFF;
-  border: 1px solid #D4D0C8;
+  background: var(--xp-calendar-bg);
+  color: var(--xp-calendar-text);
+  border: 1px solid var(--xp-border-dark);
   cursor: pointer;
   transition: all 0.1s;
 }
 .xp-calendar-day:hover {
-  background: #F0F8FF;
-  border: 2px outset #FFFFFF;
-  border-right-color: #848280;
-  border-bottom-color: #848280;
+  background: var(--xp-calendar-hover);
+  border: 2px outset var(--xp-border-light);
+  border-right-color: var(--xp-border-dark);
+  border-bottom-color: var(--xp-border-dark);
 }
 .xp-calendar-day:active {
-  border: 2px inset #FFFFFF;
-  border-left-color: #848280;
-  border-top-color: #848280;
+  border: 2px inset var(--xp-border-light);
+  border-left-color: var(--xp-border-dark);
+  border-top-color: var(--xp-border-dark);
 }
 .xp-calendar-day.other-month {
-  background: #F5F5F5;
-  color: #ACA899;
+  background: var(--xp-calendar-other-bg);
+  color: var(--xp-calendar-other-text);
 }
 .xp-calendar-day.today {
   font-weight: bold;
-  background: #E3F2FD;
-  border: 2px solid #0055EA;
+  background: var(--xp-calendar-today-bg);
+  border: 2px solid var(--xp-calendar-today-border);
 }
 
 /* Scrollbar */
@@ -416,27 +647,60 @@
   height: 16px;
 }
 ::-webkit-scrollbar-track {
-  background: #DFDFDF;
-  border-left: 1px solid #D4D0C8;
+  background: var(--xp-scrollbar-track);
+  border-left: 1px solid var(--xp-border-dark);
 }
 ::-webkit-scrollbar-thumb {
-  background: #ECE9D8;
-  border: 2px outset #FFFFFF;
-  border-right-color: #848280;
-  border-bottom-color: #848280;
+  background: var(--xp-scrollbar-thumb);
+  border: 2px outset var(--xp-border-light);
+  border-right-color: var(--xp-border-dark);
+  border-bottom-color: var(--xp-border-dark);
 }
 ::-webkit-scrollbar-thumb:active {
   border-style: inset;
 }
 ::-webkit-scrollbar-button:single-button {
-  background: #ECE9D8;
+  background: var(--xp-scrollbar-thumb);
   display: block;
-  border: 2px outset #FFFFFF;
-  border-right-color: #848280;
-  border-bottom-color: #848280;
+  border: 2px outset var(--xp-border-light);
+  border-right-color: var(--xp-border-dark);
+  border-bottom-color: var(--xp-border-dark);
   height: 16px;
   width: 16px;
 }
 ::-webkit-scrollbar-button:single-button:active {
   border-style: inset;
+}
+
+/* Theme picker dropdown */
+.xp-theme-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  background: var(--xp-window-bg);
+  border: 2px outset var(--xp-border-light);
+  border-right-color: var(--xp-border-dark);
+  border-bottom-color: var(--xp-border-dark);
+  z-index: 200;
+  min-width: 150px;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.4);
+}
+
+.xp-theme-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--xp-window-text);
+  font-family: Tahoma, sans-serif;
+  white-space: nowrap;
+}
+.xp-theme-option:hover {
+  background: var(--xp-accent);
+  color: white;
+}
+.xp-theme-option.selected {
+  font-weight: bold;
 }
