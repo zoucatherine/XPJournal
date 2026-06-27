@@ -232,6 +232,11 @@ export default function EntryScreen() {
                 textAlignVertical="top"
                 scrollEnabled={false}
               />
+              <View style={[styles.wordCountBar, { backgroundColor: colors.card, borderTopColor: colors.border, borderLeftColor: colors.border, borderBottomColor: "#FFFFFF", borderRightColor: "#FFFFFF" }]}>
+                <Text style={[styles.wordCountText, { color: colors.mutedForeground }]}>
+                  {body.trim() === "" ? 0 : body.trim().split(/\s+/).length} words
+                </Text>
+              </View>
             </View>
           </ScrollView>
         )}
@@ -426,6 +431,19 @@ const styles = StyleSheet.create({
   },
   xpBtnText: {
     fontSize: 13,
+    fontFamily: "Inter_400Regular",
+  },
+  wordCountBar: {
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignItems: "flex-end",
+  },
+  wordCountText: {
+    fontSize: 11,
     fontFamily: "Inter_400Regular",
   },
 });

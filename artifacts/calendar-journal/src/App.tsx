@@ -1428,6 +1428,23 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
                   className="xp-inset xp-textarea w-full flex-1"
                   placeholder="Dear diary..."
                 />
+                <div
+                  style={{
+                    borderTop: "1px solid var(--xp-border-dark)",
+                    borderLeft: "1px solid var(--xp-border-dark)",
+                    borderBottom: "1px solid var(--xp-border-light)",
+                    borderRight: "1px solid var(--xp-border-light)",
+                    background: "var(--xp-window-bg)",
+                    padding: "2px 6px",
+                    textAlign: "right",
+                    fontSize: "11px",
+                    fontFamily: "Tahoma, sans-serif",
+                    color: "var(--xp-window-text)",
+                    userSelect: "none",
+                  }}
+                >
+                  {body.trim() === "" ? 0 : body.trim().split(/\s+/).length} words
+                </div>
               </div>
 
               <div
