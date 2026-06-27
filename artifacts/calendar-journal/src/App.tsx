@@ -21,7 +21,8 @@ import {
   useDeleteEntry,
   useSearchEntries,
   getListEntriesQueryKey,
-  getGetEntryQueryKey
+  getGetEntryQueryKey,
+  ApiError
 } from "@workspace/api-client-react";
 import { useTheme, THEMES, type ThemeId } from "./useTheme";
 import { useWallpaper, WallpaperProvider, WALLPAPERS } from "./useWallpaper";
@@ -1258,7 +1259,11 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   const { data: entry, isLoading } = useGetEntry(dateStr, {
     query: {
       enabled: !!dateStr,
-      queryKey: getGetEntryQueryKey(dateStr)
+      queryKey: getGetEntryQueryKey(dateStr),
+      retry: (failureCount, error) =>
+        !(error instanceof ApiError && error.status === 404) && failureCount < 3,
+      throwOnError: (error) =>
+        !(error instanceof ApiError && error.status === 404)
     }
   });
 
