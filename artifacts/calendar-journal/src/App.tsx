@@ -22,8 +22,15 @@ import {
   useSearchEntries,
   getListEntriesQueryKey,
   getGetEntryQueryKey,
-  ApiError
+  ApiError,
+  useListNotes,
+  useCreateNote,
+  useUpdateNote,
+  useDeleteNote,
+  NOTES_QUERY_KEY,
+  type StickyNoteRecord,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTheme, THEMES, type ThemeId } from "./useTheme";
 import { useWallpaper, WallpaperProvider, WALLPAPERS } from "./useWallpaper";
 
@@ -57,83 +64,69 @@ const STICKY_COLORS: Record<StickyColor, { bg: string; titlebar: string; border:
   green:  { bg: "#F0FFF2", titlebar: "#3A8A40", border: "#2A7030", text: "#002808" },
 };
 
-const STICKY_STORAGE_KEY = "journal-sticky-notes";
-
-function loadStickyNotes(): StickyNoteData[] {
-  try {
-    const raw = localStorage.getItem(STICKY_STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as StickyNoteData[];
-  } catch {}
-  return [];
-}
-
-function saveStickyNotes(notes: StickyNoteData[]) {
-  try { localStorage.setItem(STICKY_STORAGE_KEY, JSON.stringify(notes)); } catch {}
+function noteToData(n: StickyNoteRecord): StickyNoteData {
+  const validColors: StickyColor[] = ["yellow", "pink", "blue", "green"];
+  return {
+    id: n.id,
+    content: n.content,
+    position: { x: n.posX, y: n.posY },
+    color: validColors.includes(n.color as StickyColor) ? (n.color as StickyColor) : "yellow",
+    size: n.sizeW != null && n.sizeH != null ? { w: n.sizeW, h: n.sizeH } : undefined,
+  };
 }
 
 function useStickyNotes() {
-  const [notes, setNotes] = useState<StickyNoteData[]>(loadStickyNotes);
+  const qc = useQueryClient();
+  const { data: apiNotes = [] } = useListNotes();
+  const createMutation = useCreateNote();
+  const updateMutation = useUpdateNote();
+  const deleteMutation = useDeleteNote();
+  const contentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const notes: StickyNoteData[] = apiNotes.map(noteToData);
 
   const addNote = useCallback(() => {
     const id = `sticky-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const offset = Math.floor(Math.random() * 80) - 40;
     const colors: StickyColor[] = ["yellow", "pink", "blue", "green"];
     const color = colors[Math.floor(Math.random() * colors.length)];
-    const newNote: StickyNoteData = {
+    createMutation.mutate({
       id,
       content: "",
-      position: {
-        x: Math.max(40, window.innerWidth / 2 - 110 + offset),
-        y: Math.max(40, window.innerHeight / 2 - 120 + offset),
-      },
       color,
-    };
-    setNotes(prev => {
-      const next = [...prev, newNote];
-      saveStickyNotes(next);
-      return next;
+      posX: Math.round(Math.max(40, window.innerWidth / 2 - 110 + offset)),
+      posY: Math.round(Math.max(40, window.innerHeight / 2 - 120 + offset)),
     });
-  }, []);
+  }, [createMutation]);
 
   const updateContent = useCallback((id: string, content: string) => {
-    setNotes(prev => {
-      const next = prev.map(n => n.id === id ? { ...n, content } : n);
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    qc.setQueryData<StickyNoteRecord[]>(NOTES_QUERY_KEY, prev =>
+      prev ? prev.map(n => n.id === id ? { ...n, content } : n) : prev
+    );
+    const timers = contentTimers.current;
+    const existing = timers.get(id);
+    if (existing) clearTimeout(existing);
+    timers.set(id, setTimeout(() => {
+      timers.delete(id);
+      updateMutation.mutate({ id, input: { content } });
+    }, 600));
+  }, [qc, updateMutation]);
 
   const updatePosition = useCallback((id: string, position: DragPos) => {
-    setNotes(prev => {
-      const next = prev.map(n => n.id === id ? { ...n, position } : n);
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    updateMutation.mutate({ id, input: { posX: Math.round(position.x), posY: Math.round(position.y) } });
+  }, [updateMutation]);
 
   const updateColor = useCallback((id: string, color: StickyColor) => {
-    setNotes(prev => {
-      const next = prev.map(n => n.id === id ? { ...n, color } : n);
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    updateMutation.mutate({ id, input: { color } });
+  }, [updateMutation]);
 
   const updateSize = useCallback((id: string, size: StickySize) => {
-    setNotes(prev => {
-      const next = prev.map(n => n.id === id ? { ...n, size } : n);
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    updateMutation.mutate({ id, input: { sizeW: Math.round(size.w), sizeH: Math.round(size.h) } });
+  }, [updateMutation]);
 
   const removeNote = useCallback((id: string) => {
-    setNotes(prev => {
-      const next = prev.filter(n => n.id !== id);
-      saveStickyNotes(next);
-      return next;
-    });
-  }, []);
+    deleteMutation.mutate(id);
+  }, [deleteMutation]);
 
   return { notes, addNote, updateContent, updatePosition, updateColor, updateSize, removeNote };
 }

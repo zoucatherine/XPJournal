@@ -200,6 +200,16 @@ export default function CalendarScreen() {
           <Text style={styles.startBtnText}>Today</Text>
         </Pressable>
         <Pressable
+          testID="notes-btn"
+          onPress={() => {
+            Haptics.selectionAsync();
+            router.push("/notes");
+          }}
+          style={styles.notesBtn}
+        >
+          <Text style={styles.notesBtnIcon}>📌</Text>
+        </Pressable>
+        <Pressable
           testID="new-entry-btn"
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -392,6 +402,17 @@ const styles = StyleSheet.create({
     fontWeight: "700" as const,
     fontStyle: "italic",
     fontFamily: "Inter_700Bold",
+  },
+  notesBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notesBtnIcon: {
+    fontSize: 16,
   },
   newEntryBtn: {
     width: 34,

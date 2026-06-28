@@ -27,6 +27,7 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="entry/[date]" options={{ headerShown: false }} />
+      <Stack.Screen name="notes" options={{ headerShown: false }} />
     </Stack>
   );
 }
