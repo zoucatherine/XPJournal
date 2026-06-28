@@ -33,12 +33,22 @@ interface DragPos { x: number; y: number }
 
 type StickyColor = "yellow" | "pink" | "blue" | "green";
 
+interface StickySize { w: number; h: number }
+
 interface StickyNoteData {
   id: string;
   content: string;
   position: DragPos;
   color: StickyColor;
+  size?: StickySize;
 }
+
+const STICKY_DEFAULT_W = 220;
+const STICKY_DEFAULT_H = 140;
+const STICKY_MIN_W = 150;
+const STICKY_MIN_H = 90;
+const STICKY_MAX_W = 520;
+const STICKY_MAX_H = 420;
 
 const STICKY_COLORS: Record<StickyColor, { bg: string; titlebar: string; border: string; text: string }> = {
   yellow: { bg: "#FFFCE8", titlebar: "#D4A800", border: "#C8980000", text: "#3A2800" },
@@ -109,6 +119,14 @@ function useStickyNotes() {
     });
   }, []);
 
+  const updateSize = useCallback((id: string, size: StickySize) => {
+    setNotes(prev => {
+      const next = prev.map(n => n.id === id ? { ...n, size } : n);
+      saveStickyNotes(next);
+      return next;
+    });
+  }, []);
+
   const removeNote = useCallback((id: string) => {
     setNotes(prev => {
       const next = prev.filter(n => n.id !== id);
@@ -117,7 +135,7 @@ function useStickyNotes() {
     });
   }, []);
 
-  return { notes, addNote, updateContent, updatePosition, updateColor, removeNote };
+  return { notes, addNote, updateContent, updatePosition, updateColor, updateSize, removeNote };
 }
 
 const SNAP_THRESHOLD = 30;
@@ -1092,12 +1110,14 @@ function StickyNote({
   onContentChange,
   onPositionChange,
   onColorChange,
+  onSizeChange,
 }: {
   note: StickyNoteData;
   onClose: (id: string) => void;
   onContentChange: (id: string, content: string) => void;
   onPositionChange: (id: string, pos: DragPos) => void;
   onColorChange: (id: string, color: StickyColor) => void;
+  onSizeChange: (id: string, size: StickySize) => void;
 }) {
   const noteRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -1105,6 +1125,12 @@ function StickyNote({
   const posRef = useRef<DragPos>(note.position);
   const [localPos, setLocalPos] = useState<DragPos>(note.position);
   const [showColorPicker, setShowColorPicker] = useState(false);
+
+  const isResizing = useRef(false);
+  const resizeStart = useRef<{ mx: number; my: number; w: number; h: number }>({ mx: 0, my: 0, w: 0, h: 0 });
+  const sizeRef = useRef<StickySize>(note.size ?? { w: STICKY_DEFAULT_W, h: STICKY_DEFAULT_H });
+  const [localSize, setLocalSize] = useState<StickySize>(note.size ?? { w: STICKY_DEFAULT_W, h: STICKY_DEFAULT_H });
+
   const colors = STICKY_COLORS[note.color];
 
   const onTitlebarMouseDown = useCallback((e: React.MouseEvent) => {
@@ -1118,21 +1144,46 @@ function StickyNote({
     e.preventDefault();
   }, []);
 
+  const onResizeMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizing.current = true;
+    resizeStart.current = {
+      mx: e.clientX,
+      my: e.clientY,
+      w: sizeRef.current.w,
+      h: sizeRef.current.h,
+    };
+  }, []);
+
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !noteRef.current) return;
-      const el = noteRef.current;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const x = Math.max(0, Math.min(e.clientX - dragOffset.current.x, vw - el.offsetWidth));
-      const y = Math.max(0, Math.min(e.clientY - dragOffset.current.y, vh - el.offsetHeight - 32));
-      posRef.current = { x, y };
-      setLocalPos({ x, y });
+      if (isDragging.current && noteRef.current) {
+        const el = noteRef.current;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const x = Math.max(0, Math.min(e.clientX - dragOffset.current.x, vw - el.offsetWidth));
+        const y = Math.max(0, Math.min(e.clientY - dragOffset.current.y, vh - el.offsetHeight - 32));
+        posRef.current = { x, y };
+        setLocalPos({ x, y });
+      } else if (isResizing.current) {
+        const dx = e.clientX - resizeStart.current.mx;
+        const dy = e.clientY - resizeStart.current.my;
+        const w = Math.min(STICKY_MAX_W, Math.max(STICKY_MIN_W, resizeStart.current.w + dx));
+        const h = Math.min(STICKY_MAX_H, Math.max(STICKY_MIN_H, resizeStart.current.h + dy));
+        sizeRef.current = { w, h };
+        setLocalSize({ w, h });
+      }
     };
     const onMouseUp = () => {
-      if (!isDragging.current) return;
-      isDragging.current = false;
-      onPositionChange(note.id, posRef.current);
+      if (isDragging.current) {
+        isDragging.current = false;
+        onPositionChange(note.id, posRef.current);
+      }
+      if (isResizing.current) {
+        isResizing.current = false;
+        onSizeChange(note.id, sizeRef.current);
+      }
     };
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
@@ -1140,7 +1191,7 @@ function StickyNote({
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
     };
-  }, [note.id, onPositionChange]);
+  }, [note.id, onPositionChange, onSizeChange]);
 
   const colorOptions: StickyColor[] = ["yellow", "pink", "blue", "green"];
 
@@ -1152,7 +1203,7 @@ function StickyNote({
         position: "absolute",
         left: localPos.x,
         top: localPos.y,
-        width: 220,
+        width: localSize.w,
         zIndex: 500,
         backgroundColor: colors.bg,
         boxShadow: "3px 3px 10px rgba(0,0,0,0.45)",
@@ -1236,25 +1287,51 @@ function StickyNote({
           />
         </div>
       </div>
-      <textarea
-        value={note.content}
-        onChange={e => onContentChange(note.id, e.target.value)}
-        placeholder="Type a note…"
-        style={{
-          width: "100%",
-          height: 140,
-          resize: "none",
-          border: "none",
-          outline: "none",
-          background: colors.bg,
-          color: colors.text,
-          fontFamily: "var(--app-font-sans, Tahoma, sans-serif)",
-          fontSize: 13,
-          padding: "8px 10px",
-          lineHeight: 1.5,
-          boxSizing: "border-box",
-        }}
-      />
+      <div style={{ position: "relative" }}>
+        <textarea
+          value={note.content}
+          onChange={e => onContentChange(note.id, e.target.value)}
+          placeholder="Type a note…"
+          style={{
+            width: "100%",
+            height: localSize.h,
+            resize: "none",
+            border: "none",
+            outline: "none",
+            background: colors.bg,
+            color: colors.text,
+            fontFamily: "var(--app-font-sans, Tahoma, sans-serif)",
+            fontSize: 13,
+            padding: "8px 10px",
+            lineHeight: 1.5,
+            boxSizing: "border-box",
+            display: "block",
+          }}
+        />
+        <div
+          onMouseDown={onResizeMouseDown}
+          title="Drag to resize"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: 16,
+            height: 16,
+            cursor: "nwse-resize",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+            padding: "2px",
+            userSelect: "none",
+            zIndex: 10,
+          }}
+        >
+          <svg width="10" height="10" viewBox="0 0 10 10" style={{ opacity: 0.4, pointerEvents: "none" }}>
+            <line x1="10" y1="2" x2="2" y2="10" stroke={colors.text} strokeWidth="1.5" strokeLinecap="round" />
+            <line x1="10" y1="6" x2="6" y2="10" stroke={colors.text} strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1267,7 +1344,7 @@ function Desktop() {
   const [showStartMenu, setShowStartMenu] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [copyToast, setCopyToast] = useState(false);
-  const { notes, addNote, updateContent, updatePosition, updateColor, removeNote } = useStickyNotes();
+  const { notes, addNote, updateContent, updatePosition, updateColor, updateSize, removeNote } = useStickyNotes();
 
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
   const { getDesktopStyle } = useWallpaper();
@@ -1495,6 +1572,7 @@ function Desktop() {
           onContentChange={updateContent}
           onPositionChange={updatePosition}
           onColorChange={updateColor}
+          onSizeChange={updateSize}
         />
       ))}
 
