@@ -77,11 +77,17 @@ function noteToData(n: StickyNoteRecord): StickyNoteData {
 
 function useStickyNotes() {
   const qc = useQueryClient();
-  const { data: apiNotes = [] } = useListNotes();
-  const createMutation = useCreateNote();
-  const updateMutation = useUpdateNote();
-  const deleteMutation = useDeleteNote();
+  const { data: apiNotes = [], isError: notesLoadError, isLoading: notesLoading } = useListNotes();
+  const [saveError, setSaveError] = useState<string | null>(null);
   const contentTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const onMutationError = useCallback(() => {
+    setSaveError("Note could not be saved — check your connection and try again.");
+  }, []);
+
+  const createMutation = useCreateNote({ onError: onMutationError });
+  const updateMutation = useUpdateNote({ onError: onMutationError });
+  const deleteMutation = useDeleteNote({ onError: onMutationError });
 
   const notes: StickyNoteData[] = apiNotes.map(noteToData);
 
@@ -128,7 +134,21 @@ function useStickyNotes() {
     deleteMutation.mutate(id);
   }, [deleteMutation]);
 
-  return { notes, addNote, updateContent, updatePosition, updateColor, updateSize, removeNote };
+  const clearSaveError = useCallback(() => setSaveError(null), []);
+
+  return {
+    notes,
+    notesLoading,
+    notesLoadError,
+    saveError,
+    clearSaveError,
+    addNote,
+    updateContent,
+    updatePosition,
+    updateColor,
+    updateSize,
+    removeNote,
+  };
 }
 
 const SNAP_THRESHOLD = 30;
@@ -1218,6 +1238,12 @@ function StickyNote({
           <span style={{ fontSize: 11, fontFamily: "Tahoma, sans-serif", opacity: 0.9, flex: 1 }}>
             Sticky Note
           </span>
+          <span
+            title="Saved to server — survives browser clears and device switches"
+            style={{ fontSize: 10, opacity: 0.75, marginRight: 2, cursor: "default", userSelect: "none" }}
+          >
+            ☁
+          </span>
           <div style={{ position: "relative" }}>
             <button
               className="sticky-color-pick"
@@ -1337,7 +1363,19 @@ function Desktop() {
   const [showStartMenu, setShowStartMenu] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [copyToast, setCopyToast] = useState(false);
-  const { notes, addNote, updateContent, updatePosition, updateColor, updateSize, removeNote } = useStickyNotes();
+  const {
+    notes,
+    notesLoading,
+    notesLoadError,
+    saveError,
+    clearSaveError,
+    addNote,
+    updateContent,
+    updatePosition,
+    updateColor,
+    updateSize,
+    removeNote,
+  } = useStickyNotes();
 
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
   const { getDesktopStyle } = useWallpaper();
@@ -1554,6 +1592,74 @@ function Desktop() {
           date={selectedDate}
           onClose={() => setSelectedDate(null)}
         />
+      )}
+
+      {/* Sticky Notes — load error banner */}
+      {notesLoadError && !notesLoading && (
+        <div
+          style={{
+            position: "fixed",
+            top: 10,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 9000,
+            backgroundColor: "#fff0f0",
+            border: "2px solid #c00",
+            borderRadius: 0,
+            padding: "6px 16px",
+            fontFamily: "Tahoma, sans-serif",
+            fontSize: 12,
+            boxShadow: "2px 2px 4px rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span>⚠️</span>
+          <span>Could not load sticky notes — they are saved on the server and will appear when the connection is restored.</span>
+        </div>
+      )}
+
+      {/* Sticky Notes — save error toast */}
+      {saveError && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 48,
+            right: 12,
+            zIndex: 9500,
+            backgroundColor: "#fff0f0",
+            border: "2px solid",
+            borderColor: "#ffffff #808080 #808080 #ffffff",
+            padding: "7px 14px",
+            fontFamily: "Tahoma, sans-serif",
+            fontSize: 12,
+            boxShadow: "2px 2px 4px rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            maxWidth: 320,
+          }}
+        >
+          <span style={{ fontSize: 15 }}>⚠️</span>
+          <span style={{ flex: 1 }}>{saveError}</span>
+          <button
+            onClick={clearSaveError}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "Tahoma, sans-serif",
+              fontSize: 11,
+              color: "#333",
+              padding: "0 2px",
+              flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* Sticky Notes */}
