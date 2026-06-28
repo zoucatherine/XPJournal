@@ -31,6 +31,95 @@ const queryClient = new QueryClient();
 
 interface DragPos { x: number; y: number }
 
+type StickyColor = "yellow" | "pink" | "blue" | "green";
+
+interface StickyNoteData {
+  id: string;
+  content: string;
+  position: DragPos;
+  color: StickyColor;
+}
+
+const STICKY_COLORS: Record<StickyColor, { bg: string; titlebar: string; border: string; text: string }> = {
+  yellow: { bg: "#FFFCE8", titlebar: "#D4A800", border: "#C8980000", text: "#3A2800" },
+  pink:   { bg: "#FFF0F5", titlebar: "#D45C9E", border: "#C0408800", text: "#3A0020" },
+  blue:   { bg: "#F0F5FF", titlebar: "#3A6AC8", border: "#2A54A800", text: "#001040" },
+  green:  { bg: "#F0FFF2", titlebar: "#3A8A40", border: "#2A7030", text: "#002808" },
+};
+
+const STICKY_STORAGE_KEY = "journal-sticky-notes";
+
+function loadStickyNotes(): StickyNoteData[] {
+  try {
+    const raw = localStorage.getItem(STICKY_STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as StickyNoteData[];
+  } catch {}
+  return [];
+}
+
+function saveStickyNotes(notes: StickyNoteData[]) {
+  try { localStorage.setItem(STICKY_STORAGE_KEY, JSON.stringify(notes)); } catch {}
+}
+
+function useStickyNotes() {
+  const [notes, setNotes] = useState<StickyNoteData[]>(loadStickyNotes);
+
+  const addNote = useCallback(() => {
+    const id = `sticky-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const offset = Math.floor(Math.random() * 80) - 40;
+    const colors: StickyColor[] = ["yellow", "pink", "blue", "green"];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const newNote: StickyNoteData = {
+      id,
+      content: "",
+      position: {
+        x: Math.max(40, window.innerWidth / 2 - 110 + offset),
+        y: Math.max(40, window.innerHeight / 2 - 120 + offset),
+      },
+      color,
+    };
+    setNotes(prev => {
+      const next = [...prev, newNote];
+      saveStickyNotes(next);
+      return next;
+    });
+  }, []);
+
+  const updateContent = useCallback((id: string, content: string) => {
+    setNotes(prev => {
+      const next = prev.map(n => n.id === id ? { ...n, content } : n);
+      saveStickyNotes(next);
+      return next;
+    });
+  }, []);
+
+  const updatePosition = useCallback((id: string, position: DragPos) => {
+    setNotes(prev => {
+      const next = prev.map(n => n.id === id ? { ...n, position } : n);
+      saveStickyNotes(next);
+      return next;
+    });
+  }, []);
+
+  const updateColor = useCallback((id: string, color: StickyColor) => {
+    setNotes(prev => {
+      const next = prev.map(n => n.id === id ? { ...n, color } : n);
+      saveStickyNotes(next);
+      return next;
+    });
+  }, []);
+
+  const removeNote = useCallback((id: string) => {
+    setNotes(prev => {
+      const next = prev.filter(n => n.id !== id);
+      saveStickyNotes(next);
+      return next;
+    });
+  }, []);
+
+  return { notes, addNote, updateContent, updatePosition, updateColor, removeNote };
+}
+
 const SNAP_THRESHOLD = 30;
 const SNAP_TRANSITION = "left 0.12s ease, top 0.12s ease";
 
@@ -237,9 +326,11 @@ function MenuRow({
 function StartMenu({
   onClose,
   onOpenSearch,
+  onNewNote,
 }: {
   onClose: () => void;
   onOpenSearch: () => void;
+  onNewNote: () => void;
 }) {
   const { theme, setTheme } = useTheme();
   const { wallpaperId, customImage, setWallpaper, setCustomImage, clearCustomImage } = useWallpaper();
@@ -337,6 +428,7 @@ function StartMenu({
       </div>
 
       <MenuRow icon="🔍" label="Search Entries" onClick={() => { onOpenSearch(); onClose(); }} />
+      <MenuRow icon="📌" label="New Sticky Note" onClick={() => { onNewNote(); onClose(); }} />
 
       <MenuRow
         icon="🎨"
@@ -994,6 +1086,179 @@ function ContextMenuItem({
   );
 }
 
+function StickyNote({
+  note,
+  onClose,
+  onContentChange,
+  onPositionChange,
+  onColorChange,
+}: {
+  note: StickyNoteData;
+  onClose: (id: string) => void;
+  onContentChange: (id: string, content: string) => void;
+  onPositionChange: (id: string, pos: DragPos) => void;
+  onColorChange: (id: string, color: StickyColor) => void;
+}) {
+  const noteRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const dragOffset = useRef<DragPos>({ x: 0, y: 0 });
+  const posRef = useRef<DragPos>(note.position);
+  const [localPos, setLocalPos] = useState<DragPos>(note.position);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const colors = STICKY_COLORS[note.color];
+
+  const onTitlebarMouseDown = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest(".sticky-close") || target.closest(".sticky-color-pick")) return;
+    const el = noteRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    isDragging.current = true;
+    dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    e.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !noteRef.current) return;
+      const el = noteRef.current;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const x = Math.max(0, Math.min(e.clientX - dragOffset.current.x, vw - el.offsetWidth));
+      const y = Math.max(0, Math.min(e.clientY - dragOffset.current.y, vh - el.offsetHeight - 32));
+      posRef.current = { x, y };
+      setLocalPos({ x, y });
+    };
+    const onMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      onPositionChange(note.id, posRef.current);
+    };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [note.id, onPositionChange]);
+
+  const colorOptions: StickyColor[] = ["yellow", "pink", "blue", "green"];
+
+  return (
+    <div
+      ref={noteRef}
+      className="xp-window"
+      style={{
+        position: "absolute",
+        left: localPos.x,
+        top: localPos.y,
+        width: 220,
+        zIndex: 500,
+        backgroundColor: colors.bg,
+        boxShadow: "3px 3px 10px rgba(0,0,0,0.45)",
+      }}
+    >
+      <div
+        className="xp-titlebar"
+        onMouseDown={onTitlebarMouseDown}
+        style={{
+          background: colors.titlebar,
+          cursor: "default",
+          userSelect: "none",
+          padding: "3px 5px",
+          minHeight: 26,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1 }}>
+          <span style={{ fontSize: 13 }}>📌</span>
+          <span style={{ fontSize: 11, fontFamily: "Tahoma, sans-serif", opacity: 0.9, flex: 1 }}>
+            Sticky Note
+          </span>
+          <div style={{ position: "relative" }}>
+            <button
+              className="sticky-color-pick"
+              title="Change color"
+              onClick={() => setShowColorPicker(v => !v)}
+              style={{
+                background: "rgba(255,255,255,0.25)",
+                border: "1px solid rgba(255,255,255,0.5)",
+                borderRadius: 3,
+                cursor: "pointer",
+                padding: "1px 5px",
+                fontSize: 10,
+                color: "white",
+                fontFamily: "Tahoma, sans-serif",
+              }}
+            >
+              🎨
+            </button>
+            {showColorPicker && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 4px)",
+                  right: 0,
+                  background: "var(--xp-window-bg)",
+                  border: "2px outset var(--xp-border-light)",
+                  borderRightColor: "var(--xp-border-dark)",
+                  borderBottomColor: "var(--xp-border-dark)",
+                  boxShadow: "2px 2px 6px rgba(0,0,0,0.4)",
+                  zIndex: 600,
+                  padding: "6px",
+                  display: "flex",
+                  gap: 5,
+                }}
+              >
+                {colorOptions.map(c => (
+                  <div
+                    key={c}
+                    title={c}
+                    onClick={() => { onColorChange(note.id, c); setShowColorPicker(false); }}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      background: STICKY_COLORS[c].titlebar,
+                      border: note.color === c ? "2px solid white" : "2px solid rgba(0,0,0,0.3)",
+                      borderRadius: 2,
+                      cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="xp-titlebar-controls" style={{ marginLeft: 4 }}>
+          <div
+            className="xp-btn-control xp-btn-close sticky-close"
+            onClick={() => onClose(note.id)}
+          />
+        </div>
+      </div>
+      <textarea
+        value={note.content}
+        onChange={e => onContentChange(note.id, e.target.value)}
+        placeholder="Type a note…"
+        style={{
+          width: "100%",
+          height: 140,
+          resize: "none",
+          border: "none",
+          outline: "none",
+          background: colors.bg,
+          color: colors.text,
+          fontFamily: "var(--app-font-sans, Tahoma, sans-serif)",
+          fontSize: 13,
+          padding: "8px 10px",
+          lineHeight: 1.5,
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+  );
+}
+
 function Desktop() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -1002,6 +1267,7 @@ function Desktop() {
   const [showStartMenu, setShowStartMenu] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [copyToast, setCopyToast] = useState(false);
+  const { notes, addNote, updateContent, updatePosition, updateColor, removeNote } = useStickyNotes();
 
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
   const { getDesktopStyle } = useWallpaper();
@@ -1220,11 +1486,24 @@ function Desktop() {
         />
       )}
 
+      {/* Sticky Notes */}
+      {notes.map(note => (
+        <StickyNote
+          key={note.id}
+          note={note}
+          onClose={removeNote}
+          onContentChange={updateContent}
+          onPositionChange={updatePosition}
+          onColorChange={updateColor}
+        />
+      ))}
+
       {/* Start Menu */}
       {showStartMenu && (
         <StartMenu
           onClose={() => setShowStartMenu(false)}
           onOpenSearch={() => { setShowSearch(true); setShowStartMenu(false); }}
+          onNewNote={() => { addNote(); setShowStartMenu(false); }}
         />
       )}
 
