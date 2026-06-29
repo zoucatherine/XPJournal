@@ -1,9 +1,9 @@
 {
   "version": 2,
   "framework": null,
-  "buildCommand": "pnpm install --frozen-lockfile && pnpm run build:vercel",
   "devCommand": "pnpm run dev",
-  "installCommand": "pnpm install --frozen-lockfile",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm run build:vercel",
   "regions": ["iad1"],
   "routes": [
     {
