@@ -6,27 +6,17 @@
   "buildCommand": "pnpm install --no-frozen-lockfile && pnpm run build:vercel",
   "regions": ["iad1"],
   "env": {
-    "NODE_ENV": "development"
+    "NODE_ENV": "production"
   },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/artifacts/calendar-journal/dist/public/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/artifacts/calendar-journal/dist/public/index.html"
-    }
-  ],
   "outputDirectory": "artifacts/calendar-journal/dist/public",
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api/index"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/artifacts/calendar-journal/dist/public/index.html"
+      "destination": "/index.html"
     }
   ]
 }
