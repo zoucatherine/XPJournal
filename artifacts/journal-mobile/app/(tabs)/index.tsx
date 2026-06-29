@@ -241,7 +241,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700" as const,
     fontFamily: "Inter_700Bold",
-    textShadow: "1px 1px 0px rgba(0,0,0,0.5)",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 0,
   },
   window: {
     flex: 1,

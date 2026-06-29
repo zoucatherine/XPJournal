@@ -8,6 +8,7 @@ import {
   useDeleteEntry,
   useGetEntry,
   useUpdateEntry,
+  getGetEntryQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
@@ -51,16 +52,13 @@ export default function EntryScreen() {
   const [isDirty, setIsDirty] = useState(false);
   const initialized = useRef(false);
 
-  const {
-    data: entry,
-    isLoading,
-    isError,
-  } = useGetEntry(date ?? "", {
-    query: {
-      enabled: !!date,
-      retry: false,
-    },
-  });
+  const { data: entry, isLoading, isError } = useGetEntry(date ?? "", {
+  query: {
+    queryKey: getGetEntryQueryKey(date ?? ""),
+    enabled: !!date,
+    retry: false,
+  },
+});
 
   const isNew = !isLoading && !entry;
 
@@ -112,7 +110,7 @@ export default function EntryScreen() {
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (isNew) {
-      createMutation.mutate({ date, title: title.trim(), body: body.trim() });
+      createMutation.mutate({ data: { date, title: title.trim(), body: body.trim() } });
     } else {
       updateMutation.mutate({ date, data: { title: title.trim(), body: body.trim() } });
     }
@@ -306,7 +304,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700" as const,
     fontFamily: "Inter_700Bold",
-    textShadow: "1px 1px 0px rgba(0,0,0,0.5)",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 0,
   },
   titleBarControls: {
     flexDirection: "row",

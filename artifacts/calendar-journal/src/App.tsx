@@ -874,7 +874,7 @@ function SearchWindow({
 
   const { data: results, isFetching } = useSearchEntries(
     { q: debouncedQuery },
-    { query: { enabled: debouncedQuery.length > 0 } }
+    { query: { queryKey: ['search-entries', debouncedQuery], enabled: debouncedQuery.length > 0 } }
   );
 
   const getSnippet = (body: string, q: string) => {
