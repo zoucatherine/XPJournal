@@ -1,18 +1,10 @@
-# Vercel ignore file
 node_modules
 .git
-.gitignore
-README.md
-*.md
-!.vercel
-.vercel
 *.log
-npm-debug.log*
 .DS_Store
 .idea
 .vscode
 *.tsbuildinfo
-dist
 .cache
 .local
 .claude
@@ -20,20 +12,8 @@ dist
 .replitignore
 .nix
 post-merge.sh
-pnpm-workspace.yaml
-
 package-lock.json
 
-artifacts/api-server/src
-artifacts/api-server/tsconfig.json
-artifacts/api-server/build.mjs
-artifacts/calendar-journal/src
-artifacts/calendar-journal/public
-artifacts/calendar-journal/vite.config.ts
-artifacts/calendar-journal/tsconfig.json
-artifacts/calendar-journal/index.html
-artifacts/calendar-journal/components.json
+# These packages aren't needed on Vercel
 artifacts/journal-mobile
 artifacts/mockup-sandbox
-lib
-scripts

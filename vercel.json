@@ -5,6 +5,9 @@
   "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm install --no-frozen-lockfile && pnpm run build:vercel",
   "regions": ["iad1"],
+  "env": {
+    "NODE_ENV": "development"
+  },
   "routes": [
     {
       "src": "/api/(.*)",
