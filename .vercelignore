@@ -21,9 +21,9 @@ dist
 .nix
 post-merge.sh
 pnpm-workspace.yaml
-package.json
+
 package-lock.json
-pnpm-lock.yaml
+
 artifacts/api-server/src
 artifacts/api-server/tsconfig.json
 artifacts/api-server/build.mjs
