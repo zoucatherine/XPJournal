@@ -122,3 +122,47 @@ export const DeleteEntryParams = zod.object({
 export const DeleteEntryResponse = zod.void()
 
 
+/**
+ * Returns whether a PIN is currently configured
+ * @summary Get PIN lock status
+ */
+export const GetPinStatusResponse = zod.object({
+  "configured": zod.boolean().describe('Whether a PIN is currently configured')
+})
+
+
+/**
+ * Creates or replaces the bcrypt-hashed PIN stored server-side
+ * @summary Set or change the PIN
+ */
+export const SetPinBody = zod.object({
+  "pin": zod.string().describe('4-digit numeric PIN')
+})
+
+export const SetPinResponse = zod.object({
+  "ok": zod.boolean().describe('Whether the operation succeeded')
+})
+
+
+/**
+ * Compares the submitted PIN against the stored bcrypt hash
+ * @summary Verify a PIN attempt
+ */
+export const VerifyPinBody = zod.object({
+  "pin": zod.string().describe('4-digit numeric PIN')
+})
+
+export const VerifyPinResponse = zod.object({
+  "ok": zod.boolean().describe('Whether the operation succeeded')
+})
+
+
+/**
+ * Deletes the stored PIN hash, disabling the lock
+ * @summary Remove the PIN lock
+ */
+export const RemovePinResponse = zod.object({
+  "ok": zod.boolean().describe('Whether the operation succeeded')
+})
+
+

@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: entries
     description: Journal entry operations
+  - name: pin
+    description: PIN lock operations
 paths:
   /healthz:
     get:
@@ -160,6 +162,106 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /pin/status:
+    get:
+      operationId: getPinStatus
+      tags: [pin]
+      summary: Get PIN lock status
+      description: Returns whether a PIN is currently configured
+      responses:
+        "200":
+          description: PIN status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PinStatus"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /pin/set:
+    post:
+      operationId: setPin
+      tags: [pin]
+      summary: Set or change the PIN
+      description: Creates or replaces the bcrypt-hashed PIN stored server-side
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PinInput"
+      responses:
+        "200":
+          description: PIN set successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PinResult"
+        "400":
+          description: Invalid PIN format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /pin/verify:
+    post:
+      operationId: verifyPin
+      tags: [pin]
+      summary: Verify a PIN attempt
+      description: Compares the submitted PIN against the stored bcrypt hash
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PinInput"
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PinResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /pin/remove:
+    delete:
+      operationId: removePin
+      tags: [pin]
+      summary: Remove the PIN lock
+      description: Deletes the stored PIN hash, disabling the lock
+      responses:
+        "200":
+          description: PIN removed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PinResult"
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -232,3 +334,27 @@ components:
           type: string
       required:
         - error
+    PinStatus:
+      type: object
+      properties:
+        configured:
+          type: boolean
+          description: Whether a PIN is currently configured
+      required:
+        - configured
+    PinInput:
+      type: object
+      properties:
+        pin:
+          type: string
+          description: 4-digit numeric PIN
+      required:
+        - pin
+    PinResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: Whether the operation succeeded
+      required:
+        - ok

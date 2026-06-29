@@ -10,5 +10,8 @@ export * from './createJournalEntryInput';
 export * from './errorResponse';
 export * from './healthStatus';
 export * from './journalEntry';
+export * from './pinInput';
+export * from './pinResult';
+export * from './pinStatus';
 export * from './searchEntriesParams';
 export * from './updateJournalEntryInput';

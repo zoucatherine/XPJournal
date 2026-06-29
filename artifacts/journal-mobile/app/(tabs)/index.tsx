@@ -3,6 +3,7 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useListEntries } from "@workspace/api-client-react";
+import { MobilePinSettings } from "@/components/MobilePinSettings";
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -42,6 +43,7 @@ export default function CalendarScreen() {
   const [viewMonth, setViewMonth] = useState(now.getMonth());
 
   const { data: entries, isLoading, isError, refetch } = useListEntries();
+  const [showPinSettings, setShowPinSettings] = useState(false);
 
   const entryDates = useMemo(() => {
     const set = new Set<string>();
@@ -210,6 +212,16 @@ export default function CalendarScreen() {
           <Text style={styles.notesBtnIcon}>📌</Text>
         </Pressable>
         <Pressable
+          testID="pin-settings-btn"
+          onPress={() => {
+            Haptics.selectionAsync();
+            setShowPinSettings(true);
+          }}
+          style={styles.notesBtn}
+        >
+          <Text style={styles.notesBtnIcon}>🔑</Text>
+        </Pressable>
+        <Pressable
           testID="new-entry-btn"
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -220,6 +232,11 @@ export default function CalendarScreen() {
           <Feather name="edit-3" size={14} color="#FFFFFF" />
         </Pressable>
       </View>
+
+      <MobilePinSettings
+        visible={showPinSettings}
+        onClose={() => setShowPinSettings(false)}
+      />
     </View>
   );
 }

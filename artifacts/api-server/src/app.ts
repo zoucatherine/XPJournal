@@ -1,10 +1,29 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import router from "./routes.js";
+import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
+import { runMigrations } from "./migrate.js";
 
 const app: Express = express();
+
+let migrationsDone = false;
+let migrationPromise: Promise<void> | null = null;
+
+async function ensureMigrations(): Promise<void> {
+  if (migrationsDone) return;
+  if (!migrationPromise) {
+    migrationPromise = runMigrations()
+      .then(() => {
+        migrationsDone = true;
+      })
+      .catch((err) => {
+        migrationPromise = null;
+        throw err;
+      });
+  }
+  return migrationPromise;
+}
 
 app.use(
   pinoHttp({
@@ -28,6 +47,10 @@ app.use(
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use((_req: Request, _res: Response, next: NextFunction) => {
+  ensureMigrations().then(() => next()).catch(next);
+});
 
 app.use("/api", router);
 

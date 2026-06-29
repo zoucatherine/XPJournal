@@ -6,21 +6,24 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { setBaseUrl } from "@workspace/api-client-react";
+import { setBaseUrl, getPinStatus } from "@workspace/api-client-react";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PinLockScreen } from "@/app/pin-lock";
 
 setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+type PinPhase = "loading" | "setup" | "locked" | "unlocked";
 
 function RootLayoutNav() {
   return (
@@ -30,6 +33,32 @@ function RootLayoutNav() {
       <Stack.Screen name="notes" options={{ headerShown: false }} />
     </Stack>
   );
+}
+
+function PinGate({ children }: { children: React.ReactNode }) {
+  const [phase, setPhase] = useState<PinPhase>("loading");
+
+  useEffect(() => {
+    getPinStatus()
+      .then(({ configured }) => {
+        setPhase(configured ? "locked" : "unlocked");
+      })
+      .catch(() => setPhase("locked"));
+  }, []);
+
+  const onSuccess = useCallback(() => setPhase("unlocked"), []);
+
+  if (phase === "loading") return null;
+
+  if (phase === "setup") {
+    return <PinLockScreen mode="setup" onSuccess={onSuccess} />;
+  }
+
+  if (phase === "locked") {
+    return <PinLockScreen mode="unlock" onSuccess={onSuccess} />;
+  }
+
+  return <>{children}</>;
 }
 
 export default function RootLayout() {
@@ -54,7 +83,9 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView>
             <KeyboardProvider>
-              <RootLayoutNav />
+              <PinGate>
+                <RootLayoutNav />
+              </PinGate>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>

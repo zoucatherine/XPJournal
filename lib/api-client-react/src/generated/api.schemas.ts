@@ -40,6 +40,21 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface PinStatus {
+  /** Whether a PIN is currently configured */
+  configured: boolean;
+}
+
+export interface PinInput {
+  /** 4-digit numeric PIN */
+  pin: string;
+}
+
+export interface PinResult {
+  /** Whether the operation succeeded */
+  ok: boolean;
+}
+
 export type SearchEntriesParams = {
 /**
  * Keyword to search for

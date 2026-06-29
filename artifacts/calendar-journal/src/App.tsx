@@ -33,6 +33,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme, THEMES, type ThemeId } from "./useTheme";
 import { useWallpaper, WallpaperProvider, WALLPAPERS } from "./useWallpaper";
+import { usePinLock } from "./usePinLock";
+import { PinLockDialog } from "./PinLockDialog";
+import { PinSettingsDialog } from "./PinSettingsDialog";
 
 const queryClient = new QueryClient();
 
@@ -358,10 +361,12 @@ function StartMenu({
   onClose,
   onOpenSearch,
   onNewNote,
+  onOpenLockSettings,
 }: {
   onClose: () => void;
   onOpenSearch: () => void;
   onNewNote: () => void;
+  onOpenLockSettings: () => void;
 }) {
   const { theme, setTheme } = useTheme();
   const { wallpaperId, customImage, setWallpaper, setCustomImage, clearCustomImage } = useWallpaper();
@@ -460,6 +465,7 @@ function StartMenu({
 
       <MenuRow icon="🔍" label="Search Entries" onClick={() => { onOpenSearch(); onClose(); }} />
       <MenuRow icon="📌" label="New Sticky Note" onClick={() => { onNewNote(); onClose(); }} />
+      <MenuRow icon="🔑" label="Lock Settings" onClick={() => { onOpenLockSettings(); onClose(); }} />
 
       <MenuRow
         icon="🎨"
@@ -1365,7 +1371,7 @@ function StickyNote({
   );
 }
 
-function Desktop() {
+function Desktop({ lock, onOpenLockSettings }: { lock: () => void; onOpenLockSettings: () => void }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
@@ -1691,6 +1697,7 @@ function Desktop() {
           onClose={() => setShowStartMenu(false)}
           onOpenSearch={() => { setShowSearch(true); setShowStartMenu(false); }}
           onNewNote={() => { addNote(); setShowStartMenu(false); }}
+          onOpenLockSettings={() => { onOpenLockSettings(); setShowStartMenu(false); }}
         />
       )}
 
@@ -1710,8 +1717,25 @@ function Desktop() {
             </div>
           </div>
         </div>
-        <div className="xp-clock-area">
-          {format(now, "h:mm a")}
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <button
+            title="Lock Journal"
+            onClick={lock}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 14,
+              color: "rgba(255,255,255,0.85)",
+              padding: "0 6px",
+              lineHeight: 1,
+            }}
+          >
+            🔒
+          </button>
+          <div className="xp-clock-area" style={{ position: "static" }}>
+            {format(now, "h:mm a")}
+          </div>
         </div>
       </div>
     </div>
@@ -1949,14 +1973,76 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
 
 function AppInner() {
   useTheme();
+  const { state, onPinConfigured, onUnlocked, lock, onPinRemoved } = usePinLock();
+  const [showPinSettings, setShowPinSettings] = useState(false);
+
+  if (state.phase === "loading") {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "#0055e5",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ color: "white", fontFamily: "Tahoma, sans-serif", fontSize: 14 }}>
+          Loading…
+        </div>
+      </div>
+    );
+  }
+
+  if (state.phase === "setup") {
+    return (
+      <PinLockDialog
+        mode="setup"
+        onSuccess={onPinConfigured}
+      />
+    );
+  }
+
+  if (state.phase === "locked") {
+    return (
+      <PinLockDialog
+        mode="unlock"
+        onSuccess={onUnlocked}
+        onCancel={() => {
+          window.location.reload();
+        }}
+      />
+    );
+  }
+
   return (
-    <WallpaperProvider>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <Switch>
-          <Route path="/" component={Desktop} />
-        </Switch>
-      </WouterRouter>
-    </WallpaperProvider>
+    <>
+      <WallpaperProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Switch>
+            <Route path="/">
+              {() => (
+                <Desktop
+                  lock={lock}
+                  onOpenLockSettings={() => setShowPinSettings(true)}
+                />
+              )}
+            </Route>
+          </Switch>
+        </WouterRouter>
+      </WallpaperProvider>
+      {showPinSettings && (
+        <PinSettingsDialog
+          onClose={() => setShowPinSettings(false)}
+          onPinChanged={() => setShowPinSettings(false)}
+          onPinRemoved={() => {
+            setShowPinSettings(false);
+            onPinRemoved();
+          }}
+        />
+      )}
+    </>
   );
 }
 
