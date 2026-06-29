@@ -41,10 +41,17 @@ function PinGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     getPinStatus()
       .then(({ configured }) => {
-        setPhase(configured ? "locked" : "unlocked");
+        const next = configured ? "locked" : "unlocked";
+        setPhase(next);
       })
       .catch(() => setPhase("locked"));
   }, []);
+
+  useEffect(() => {
+    if (phase !== "loading") {
+      SplashScreen.hideAsync();
+    }
+  }, [phase]);
 
   const onSuccess = useCallback(() => setPhase("unlocked"), []);
 
@@ -68,12 +75,6 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
-
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
 
   if (!fontsLoaded && !fontError) return null;
 
