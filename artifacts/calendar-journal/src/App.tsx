@@ -1169,6 +1169,15 @@ function StickyNote({
     };
   }, []);
 
+  const onResizeDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const defaultSize: StickySize = { w: STICKY_DEFAULT_W, h: STICKY_DEFAULT_H };
+    sizeRef.current = defaultSize;
+    setLocalSize(defaultSize);
+    onSizeChange(note.id, defaultSize);
+  }, [note.id, onSizeChange]);
+
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (isDragging.current && noteRef.current) {
@@ -1329,7 +1338,8 @@ function StickyNote({
         />
         <div
           onMouseDown={onResizeMouseDown}
-          title="Drag to resize"
+          onDoubleClick={onResizeDoubleClick}
+          title="Drag to resize • Double-click to reset size"
           style={{
             position: "absolute",
             bottom: 0,
