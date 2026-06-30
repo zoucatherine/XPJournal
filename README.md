@@ -2,7 +2,7 @@
 
 A cross-platform journaling app built with a nostalgic **Windows XP-inspired desktop UI**. Write daily entries, pin sticky notes to your desktop, lock your journal with a PIN, and customize your workspace with themes and wallpapers — all from a faithful recreation of the classic XP environment.
 
----
+----
 
 ## Features
 
