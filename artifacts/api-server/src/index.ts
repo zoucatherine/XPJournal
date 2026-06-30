@@ -1,5 +1,5 @@
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js";
+import { logger } from "./lib/logger.js";
 import { runMigrations } from "./migrate.js";
 
 const migrationPromise = runMigrations().catch((err) => {
@@ -23,12 +23,12 @@ if (process.env.VERCEL !== "1") {
   }
 
   migrationPromise.then(() => {
-    app.listen(port, (err) => {
-      if (err) {
-        logger.error({ err }, "Error listening on port");
-        process.exit(1);
-      }
+    const server = app.listen(port, () => {
       logger.info({ port }, "Server listening");
+    });
+    server.on("error", (err: Error) => {
+      logger.error({ err }, "Error listening on port");
+      process.exit(1);
     });
   });
 }
