@@ -50,7 +50,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use((_req: Request, _res: Response, next: NextFunction) => {
-  ensureMigrations().then(() => next()).catch(next);
+  ensureMigrations().then(() => next()).catch((err) => next(err));
 });
 
 app.use("/api", router);
