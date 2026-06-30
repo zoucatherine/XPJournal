@@ -1,11 +1,12 @@
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import express, { type Application, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
-import pinoHttp from "pino-http";
+import { pinoHttp } from "pino-http";
+import type { IncomingMessage, ServerResponse } from "http";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 import { runMigrations } from "./migrate.js";
 
-const app: Express = express();
+const app: Application = express();
 
 let migrationsDone = false;
 let migrationPromise: Promise<void> | null = null;
@@ -29,14 +30,14 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req) {
+      req(req: IncomingMessage) {
         return {
-          id: req.id,
+          id: (req as IncomingMessage & { id: unknown }).id,
           method: req.method,
           url: req.url?.split("?")[0],
         };
       },
-      res(res) {
+      res(res: ServerResponse) {
         return {
           statusCode: res.statusCode,
         };
