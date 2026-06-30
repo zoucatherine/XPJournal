@@ -1,7 +1,8 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express"; // 1. Dropped IRouter import
 import { HealthCheckResponse } from "@workspace/api-zod";
 
-const router: IRouter = Router();
+// 2. Removed the : IRouter type restriction
+const router = Router(); 
 
 router.get("/healthz", (_req, res) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
