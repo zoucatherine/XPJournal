@@ -1,4 +1,4 @@
-import express, { type Application, type Request, type Response, type NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import { pinoHttp } from "pino-http";
 import type { IncomingMessage, ServerResponse } from "http";
@@ -6,7 +6,7 @@ import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 import { runMigrations } from "./migrate.js";
 
-const app: Application = express();
+const app: Express = express();
 
 let migrationsDone = false;
 let migrationPromise: Promise<void> | null = null;
