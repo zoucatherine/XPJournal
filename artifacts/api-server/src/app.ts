@@ -1,7 +1,9 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import cors from "cors";
 import { pinoHttp } from "pino-http";
 import type { IncomingMessage, ServerResponse } from "http";
+// 1. Import RequestHandler cleanly as a type
+import type { RequestHandler } from "express"; 
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 import { runMigrations } from "./migrate.js";
@@ -49,10 +51,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((_req: Request, _res: Response, next: NextFunction) => {
-  ensureMigrations().then(() => next()).catch((err) => next(err));
-});
-
+const migrationMiddleware: RequestHandler = (_req, _res, next) => {
+  ensureMigrations()
+    .then(() => next())
+    .catch((err) => next(err));
+};
+app.use(migrationMiddleware);
 app.use("/api", router);
 
 export default app;
