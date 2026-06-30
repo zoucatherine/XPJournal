@@ -1,10 +1,11 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express"; // 1. Drop the IRouter import completely
 import healthRouter from "./health.js";
 import entriesRouter from "./entries.js";
 import notesRouter from "./notes.js";
 import pinRouter from "./pin.js";
 
-const router: IRouter = Router();
+// 2. Let TypeScript implicitly infer the perfect Router instance type
+const router = Router(); 
 
 router.use(healthRouter);
 router.use(entriesRouter);
