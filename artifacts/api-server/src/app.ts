@@ -52,16 +52,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const migrationMiddleware: RequestHandler = (
-  _req: Request, 
-  _res: Response, 
-  next: NextFunction
-) => {
+app.use((_req: any, _res: any, next: (err?: any) => void) => {
   ensureMigrations()
     .then(() => next())
     .catch((err) => next(err));
-};
-app.use(migrationMiddleware);
+});
 app.use("/api", router);
 
 export default app;
