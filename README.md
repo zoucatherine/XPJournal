@@ -15,7 +15,7 @@ A cross-platform journaling app built with a nostalgic **Windows XP-inspired des
 - **Search** — Full-text search across all journal entries.
 - **Mobile App** — Companion Expo/React Native app for journaling and PIN security on iOS and Android.
 
----
+----
 
 ## Project Structure
 
