@@ -35,7 +35,7 @@ lib/
   api-zod/             — Generated Zod validation schemas via Orval (@workspace/api-zod)
 ```
 
----
+----
 
 ## Tech Stack
 
