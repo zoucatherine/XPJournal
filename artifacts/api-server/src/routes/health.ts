@@ -1,13 +1,14 @@
 import { Router } from "express";
-// 1. Remove Response and Request imports completely to clear up the namespace
+// 1. Explicitly import Request and Response type structures directly from express
+import type { Request, Response } from "express";
 import { HealthCheckResponse } from "@workspace/api-zod";
 
 const router = Router();
 
-// 2. Drop the explicit variable types so Express naturally provides its own methods
-router.get("/healthz", (_req, res) => {
+// 2. Add explicit inline types to satisfy noImplicitAny
+router.get("/healthz", (_req: Request, res: Response) => {
   const data = HealthCheckResponse.parse({ status: "ok" });
-  res.json(data); 
+  res.json(data);
 });
 
 export default router;
