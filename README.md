@@ -17,7 +17,7 @@ A cross-platform journaling app built with a nostalgic **Windows XP-inspired des
 
 ----
 
-## Project Structure
+## Project Structures
 
 This is a **pnpm workspace** monorepo.
 
@@ -35,7 +35,7 @@ lib/
   api-zod/             — Generated Zod validation schemas via Orval (@workspace/api-zod)
 ```
 
------s
+-----
 
 ## Tech Stack
 
