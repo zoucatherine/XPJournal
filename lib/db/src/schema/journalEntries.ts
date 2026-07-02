@@ -1,17 +1,26 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
-export const journalEntriesTable = pgTable("journal_entries", {
-  date: text("date").primaryKey(),
-  title: text("title").notNull(),
-  body: text("body").notNull(),
-  mood: text("mood"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const journalEntriesTable = pgTable(
+  "journal_entries",
+  {
+    date: text("date").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    mood: text("mood"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.date] })],
+);
 
 export const insertJournalEntrySchema = createInsertSchema(journalEntriesTable).omit({
+  userId: true,
   createdAt: true,
   updatedAt: true,
 });

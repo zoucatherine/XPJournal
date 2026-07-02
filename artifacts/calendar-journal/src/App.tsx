@@ -36,6 +36,8 @@ import { useWallpaper, WallpaperProvider, WALLPAPERS } from "./useWallpaper";
 import { usePinLock } from "./usePinLock";
 import { PinLockDialog } from "./PinLockDialog";
 import { PinSettingsDialog } from "./PinSettingsDialog";
+import { useAuth } from "./useAuth";
+import { AuthScreen } from "./AuthScreen";
 
 const queryClient = new QueryClient();
 
@@ -362,11 +364,13 @@ function StartMenu({
   onOpenSearch,
   onNewNote,
   onOpenLockSettings,
+  onLogout,
 }: {
   onClose: () => void;
   onOpenSearch: () => void;
   onNewNote: () => void;
   onOpenLockSettings: () => void;
+  onLogout: () => void;
 }) {
   const { theme, setTheme } = useTheme();
   const { wallpaperId, customImage, setWallpaper, setCustomImage, clearCustomImage } = useWallpaper();
@@ -466,6 +470,7 @@ function StartMenu({
       <MenuRow icon="🔍" label="Search Entries" onClick={() => { onOpenSearch(); onClose(); }} />
       <MenuRow icon="📌" label="New Sticky Note" onClick={() => { onNewNote(); onClose(); }} />
       <MenuRow icon="🔑" label="Lock Settings" onClick={() => { onOpenLockSettings(); onClose(); }} />
+      <MenuRow icon="🚪" label="Log Out" onClick={() => { onLogout(); onClose(); }} />
 
       <MenuRow
         icon="🎨"
@@ -1371,7 +1376,7 @@ function StickyNote({
   );
 }
 
-function Desktop({ lock, onOpenLockSettings }: { lock: () => void; onOpenLockSettings: () => void }) {
+function Desktop({ lock, onOpenLockSettings, onLogout }: { lock: () => void; onOpenLockSettings: () => void; onLogout: () => void }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
@@ -1698,6 +1703,7 @@ function Desktop({ lock, onOpenLockSettings }: { lock: () => void; onOpenLockSet
           onOpenSearch={() => { setShowSearch(true); setShowStartMenu(false); }}
           onNewNote={() => { addNote(); setShowStartMenu(false); }}
           onOpenLockSettings={() => { onOpenLockSettings(); setShowStartMenu(false); }}
+          onLogout={() => { setShowStartMenu(false); onLogout(); }}
         />
       )}
 
@@ -1971,7 +1977,7 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   );
 }
 
-function AppInner() {
+function AppInner({ onLogout }: { onLogout: () => void }) {
   useTheme();
   const { state, onPinConfigured, onUnlocked, lock, onPinRemoved } = usePinLock();
   const [showPinSettings, setShowPinSettings] = useState(false);
@@ -2026,6 +2032,7 @@ function AppInner() {
                 <Desktop
                   lock={lock}
                   onOpenLockSettings={() => setShowPinSettings(true)}
+                  onLogout={onLogout}
                 />
               )}
             </Route>
@@ -2046,10 +2053,54 @@ function AppInner() {
   );
 }
 
+function AuthGate() {
+  const { state, onAuthenticated, logout } = useAuth();
+  const qc = useQueryClient();
+
+  // Every account-scoped query (entries, notes, pin) shares the same cache
+  // keys regardless of who is logged in. Without clearing the cache on
+  // login/logout, switching accounts on the same device could briefly show
+  // the previous account's cached data before a refetch resolves.
+  const handleAuthenticated = (token: string, username: string) => {
+    qc.clear();
+    onAuthenticated(token, username);
+  };
+
+  const handleLogout = () => {
+    qc.clear();
+    logout();
+  };
+
+  if (state.phase === "loading") {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "#0055e5",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ color: "white", fontFamily: "Tahoma, sans-serif", fontSize: 14 }}>
+          Loading…
+        </div>
+      </div>
+    );
+  }
+
+  if (state.phase === "unauthenticated") {
+    return <AuthScreen onAuthenticated={handleAuthenticated} />;
+  }
+
+  return <AppInner onLogout={handleLogout} />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppInner />
+      <AuthGate />
     </QueryClientProvider>
   );
 }

@@ -15,11 +15,12 @@ import { useColors } from "@/hooks/useColors";
 interface Props {
   visible: boolean;
   onClose: () => void;
+  onLogout: () => void;
 }
 
 type Tab = "change" | "remove";
 
-export function MobilePinSettings({ visible, onClose }: Props) {
+export function MobilePinSettings({ visible, onClose, onLogout }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>("change");
@@ -238,6 +239,27 @@ export function MobilePinSettings({ visible, onClose }: Props) {
             </>
           )}
         </View>
+
+        <View style={[styles.logoutSection, { borderTopColor: colors.border }]}>
+          <Pressable
+            style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => {
+              Alert.alert("Log Out", "Are you sure you want to log out?", [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Log Out",
+                  style: "destructive",
+                  onPress: () => {
+                    handleClose();
+                    onLogout();
+                  },
+                },
+              ]);
+            }}
+          >
+            <Text style={styles.logoutBtnText}>Log Out</Text>
+          </Pressable>
+        </View>
       </View>
     </Modal>
   );
@@ -318,5 +340,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     marginBottom: 8,
+  },
+  logoutSection: {
+    borderTopWidth: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
+  logoutBtn: {
+    borderRadius: 8,
+    padding: 14,
+    alignItems: "center",
+    backgroundColor: "#e74c3c",
+  },
+  logoutBtnText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "white",
   },
 });

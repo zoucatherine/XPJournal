@@ -3,8 +3,9 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useListEntries } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { MobilePinSettings } from "@/components/MobilePinSettings";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -16,6 +17,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { useAuth } from "@/hooks/useAuth";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = [
@@ -44,6 +46,16 @@ export default function CalendarScreen() {
 
   const { data: entries, isLoading, isError, refetch } = useListEntries();
   const [showPinSettings, setShowPinSettings] = useState(false);
+  const { logout } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Clear all cached account-scoped data (entries, notes, pin status) on
+  // logout so a subsequent login by a different account never briefly
+  // renders the previous account's cached journal content.
+  const handleLogout = useCallback(() => {
+    queryClient.clear();
+    return logout();
+  }, [queryClient, logout]);
 
   const entryDates = useMemo(() => {
     const set = new Set<string>();
@@ -236,6 +248,7 @@ export default function CalendarScreen() {
       <MobilePinSettings
         visible={showPinSettings}
         onClose={() => setShowPinSettings(false)}
+        onLogout={handleLogout}
       />
     </View>
   );

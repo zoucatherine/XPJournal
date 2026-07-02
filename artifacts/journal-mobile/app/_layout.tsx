@@ -17,6 +17,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PinLockScreen } from "@/app/pin-lock";
+import { AuthScreen } from "@/app/auth-screen";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 
 setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
 
@@ -107,6 +109,37 @@ function PinGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { state, onAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (state.phase !== "loading") {
+      SplashScreen.hideAsync();
+    }
+  }, [state.phase]);
+
+  // Every account-scoped query (entries, notes, pin) shares the same cache
+  // keys regardless of who is logged in. Without clearing the cache on
+  // login, switching accounts on the same device could briefly show the
+  // previous account's cached data before a refetch resolves. Logout
+  // clearing happens where logout() is invoked (MobilePinSettings flow).
+  const handleAuthenticated = useCallback(
+    (token: string, username: string) => {
+      queryClient.clear();
+      return onAuthenticated(token, username);
+    },
+    [onAuthenticated]
+  );
+
+  if (state.phase === "loading") return null;
+
+  if (state.phase === "unauthenticated") {
+    return <AuthScreen onAuthenticated={handleAuthenticated} />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
@@ -123,9 +156,13 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <GestureHandlerRootView>
             <KeyboardProvider>
-              <PinGate>
-                <RootLayoutNav />
-              </PinGate>
+              <AuthProvider>
+                <AuthGate>
+                  <PinGate>
+                    <RootLayoutNav />
+                  </PinGate>
+                </AuthGate>
+              </AuthProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
         </QueryClientProvider>

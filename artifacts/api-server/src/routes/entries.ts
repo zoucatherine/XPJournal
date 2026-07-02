@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { journalEntriesTable, insertJournalEntrySchema, updateJournalEntrySchema } from "@workspace/db/schema";
-import { eq, or, ilike } from "drizzle-orm";
+import { and, eq, or, ilike } from "drizzle-orm";
 
 const entriesRouter = Router();
 
@@ -19,9 +19,13 @@ function formatEntry(entry: typeof journalEntriesTable.$inferSelect) {
 }
 
 // 1. Standard List Route
-entriesRouter.get("/entries", async (_req, res) => {
+entriesRouter.get("/entries", async (req, res) => {
   try {
-    const entries = await db.select().from(journalEntriesTable).orderBy(journalEntriesTable.date);
+    const entries = await db
+      .select()
+      .from(journalEntriesTable)
+      .where(eq(journalEntriesTable.userId, req.userId as string))
+      .orderBy(journalEntriesTable.date);
     res.json(entries.map(formatEntry).filter(Boolean));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch entries" });
@@ -39,7 +43,12 @@ entriesRouter.get("/entries/search", async (req, res) => {
       const entries = await db
         .select()
         .from(journalEntriesTable)
-        .where(or(ilike(journalEntriesTable.title, pattern), ilike(journalEntriesTable.body, pattern)))
+        .where(
+          and(
+            eq(journalEntriesTable.userId, req.userId as string),
+            or(ilike(journalEntriesTable.title, pattern), ilike(journalEntriesTable.body, pattern)),
+          ),
+        )
         .orderBy(journalEntriesTable.date);
       res.json(entries.map(formatEntry).filter(Boolean));
     }
@@ -54,8 +63,8 @@ entriesRouter.get("/entries/:date", async (req, res) => {
     const [entry] = await db
       .select()
       .from(journalEntriesTable)
-      .where(eq(journalEntriesTable.date, req.params.date));
-    
+      .where(and(eq(journalEntriesTable.userId, req.userId as string), eq(journalEntriesTable.date, req.params.date)));
+
     if (!entry) {
       res.status(404).json({ error: "Entry not found" });
     } else {
@@ -73,15 +82,19 @@ entriesRouter.post("/entries", async (req, res) => {
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid input" });
     } else {
+      const userId = req.userId as string;
       const existing = await db
         .select()
         .from(journalEntriesTable)
-        .where(eq(journalEntriesTable.date, parsed.data.date));
-        
+        .where(and(eq(journalEntriesTable.userId, userId), eq(journalEntriesTable.date, parsed.data.date)));
+
       if (existing.length > 0) {
         res.status(409).json({ error: "Entry already exists for that date" });
       } else {
-        const [entry] = await db.insert(journalEntriesTable).values(parsed.data).returning();
+        const [entry] = await db
+          .insert(journalEntriesTable)
+          .values({ ...parsed.data, userId })
+          .returning();
         res.status(201).json(formatEntry(entry));
       }
     }
@@ -100,9 +113,9 @@ entriesRouter.put("/entries/:date", async (req, res) => {
       const [entry] = await db
         .update(journalEntriesTable)
         .set({ ...parsed.data, updatedAt: new Date() })
-        .where(eq(journalEntriesTable.date, req.params.date))
+        .where(and(eq(journalEntriesTable.userId, req.userId as string), eq(journalEntriesTable.date, req.params.date)))
         .returning();
-        
+
       if (!entry) {
         res.status(404).json({ error: "Entry not found" });
       } else {
@@ -119,9 +132,9 @@ entriesRouter.delete("/entries/:date", async (req, res) => {
   try {
     const [deleted] = await db
       .delete(journalEntriesTable)
-      .where(eq(journalEntriesTable.date, req.params.date))
+      .where(and(eq(journalEntriesTable.userId, req.userId as string), eq(journalEntriesTable.date, req.params.date)))
       .returning();
-      
+
     if (!deleted) {
       res.status(404).json({ error: "Entry not found" });
     } else {

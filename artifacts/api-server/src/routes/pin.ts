@@ -2,19 +2,19 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
 import { settingsTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 const pinRouter = Router();
 
 const PIN_KEY = "pin_hash";
 const BCRYPT_ROUNDS = 10;
 
-pinRouter.get("/pin/status", async (_req, res) => {
+pinRouter.get("/pin/status", async (req, res) => {
   try {
     const [row] = await db
       .select()
       .from(settingsTable)
-      .where(eq(settingsTable.key, PIN_KEY));
+      .where(and(eq(settingsTable.userId, req.userId as string), eq(settingsTable.key, PIN_KEY)));
     res.json({ configured: !!row });
   } catch {
     res.status(500).json({ error: "Failed to check PIN status" });
@@ -29,11 +29,12 @@ pinRouter.post("/pin/set", async (req, res) => {
       return;
     }
     const hash = await bcrypt.hash(pin, BCRYPT_ROUNDS);
+    const userId = req.userId as string;
     await db
       .insert(settingsTable)
-      .values({ key: PIN_KEY, value: hash })
+      .values({ userId, key: PIN_KEY, value: hash })
       .onConflictDoUpdate({
-        target: settingsTable.key,
+        target: [settingsTable.userId, settingsTable.key],
         set: { value: hash, updatedAt: new Date() },
       });
     res.json({ ok: true });
@@ -52,7 +53,7 @@ pinRouter.post("/pin/verify", async (req, res) => {
     const [row] = await db
       .select()
       .from(settingsTable)
-      .where(eq(settingsTable.key, PIN_KEY));
+      .where(and(eq(settingsTable.userId, req.userId as string), eq(settingsTable.key, PIN_KEY)));
     if (!row) {
       res.json({ ok: false });
       return;
@@ -64,9 +65,11 @@ pinRouter.post("/pin/verify", async (req, res) => {
   }
 });
 
-pinRouter.delete("/pin/remove", async (_req, res) => {
+pinRouter.delete("/pin/remove", async (req, res) => {
   try {
-    await db.delete(settingsTable).where(eq(settingsTable.key, PIN_KEY));
+    await db
+      .delete(settingsTable)
+      .where(and(eq(settingsTable.userId, req.userId as string), eq(settingsTable.key, PIN_KEY)));
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: "Failed to remove PIN" });

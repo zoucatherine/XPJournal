@@ -1,9 +1,13 @@
-import { pgTable, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const stickyNotesTable = pgTable("sticky_notes", {
   id: text("id").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => usersTable.id, { onDelete: "cascade" }),
   content: text("content").notNull().default(""),
   color: text("color").notNull().default("yellow"),
   posX: integer("pos_x").notNull().default(200),
@@ -15,6 +19,7 @@ export const stickyNotesTable = pgTable("sticky_notes", {
 });
 
 export const insertStickyNoteSchema = createInsertSchema(stickyNotesTable).omit({
+  userId: true,
   createdAt: true,
   updatedAt: true,
 });
