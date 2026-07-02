@@ -26,3 +26,23 @@ export async function login(input: { username: string; password: string }): Prom
 export async function getMe(): Promise<AuthMe> {
   return customFetch<AuthMe>("/api/auth/me", { method: "GET" });
 }
+
+export async function changeUsername(input: {
+  currentPassword: string;
+  newUsername: string;
+}): Promise<AuthMe> {
+  return customFetch<AuthMe>("/api/auth/username", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function changePassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<{ ok: true }> {
+  return customFetch<{ ok: true }>("/api/auth/password", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}

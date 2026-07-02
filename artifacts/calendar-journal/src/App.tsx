@@ -36,6 +36,7 @@ import { useWallpaper, WallpaperProvider, WALLPAPERS } from "./useWallpaper";
 import { usePinLock } from "./usePinLock";
 import { PinLockDialog } from "./PinLockDialog";
 import { PinSettingsDialog } from "./PinSettingsDialog";
+import { AccountSettingsDialog } from "./AccountSettingsDialog";
 import { useAuth } from "./useAuth";
 import { AuthScreen } from "./AuthScreen";
 
@@ -364,12 +365,14 @@ function StartMenu({
   onOpenSearch,
   onNewNote,
   onOpenLockSettings,
+  onOpenAccountSettings,
   onLogout,
 }: {
   onClose: () => void;
   onOpenSearch: () => void;
   onNewNote: () => void;
   onOpenLockSettings: () => void;
+  onOpenAccountSettings: () => void;
   onLogout: () => void;
 }) {
   const { theme, setTheme } = useTheme();
@@ -470,6 +473,7 @@ function StartMenu({
       <MenuRow icon="🔍" label="Search Entries" onClick={() => { onOpenSearch(); onClose(); }} />
       <MenuRow icon="📌" label="New Sticky Note" onClick={() => { onNewNote(); onClose(); }} />
       <MenuRow icon="🔑" label="Lock Settings" onClick={() => { onOpenLockSettings(); onClose(); }} />
+      <MenuRow icon="👤" label="Account Settings" onClick={() => { onOpenAccountSettings(); onClose(); }} />
       <MenuRow icon="🚪" label="Log Out" onClick={() => { onLogout(); onClose(); }} />
 
       <MenuRow
@@ -1376,7 +1380,17 @@ function StickyNote({
   );
 }
 
-function Desktop({ lock, onOpenLockSettings, onLogout }: { lock: () => void; onOpenLockSettings: () => void; onLogout: () => void }) {
+function Desktop({
+  lock,
+  onOpenLockSettings,
+  onOpenAccountSettings,
+  onLogout,
+}: {
+  lock: () => void;
+  onOpenLockSettings: () => void;
+  onOpenAccountSettings: () => void;
+  onLogout: () => void;
+}) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
@@ -1703,6 +1717,7 @@ function Desktop({ lock, onOpenLockSettings, onLogout }: { lock: () => void; onO
           onOpenSearch={() => { setShowSearch(true); setShowStartMenu(false); }}
           onNewNote={() => { addNote(); setShowStartMenu(false); }}
           onOpenLockSettings={() => { onOpenLockSettings(); setShowStartMenu(false); }}
+          onOpenAccountSettings={() => { onOpenAccountSettings(); setShowStartMenu(false); }}
           onLogout={() => { setShowStartMenu(false); onLogout(); }}
         />
       )}
@@ -1977,10 +1992,19 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   );
 }
 
-function AppInner({ onLogout }: { onLogout: () => void }) {
+function AppInner({
+  onLogout,
+  username,
+  onUsernameChanged,
+}: {
+  onLogout: () => void;
+  username: string | null;
+  onUsernameChanged: (username: string) => void;
+}) {
   useTheme();
   const { state, onPinConfigured, onUnlocked, lock, onPinRemoved } = usePinLock();
   const [showPinSettings, setShowPinSettings] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   if (state.phase === "loading") {
     return (
@@ -2032,6 +2056,7 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
                 <Desktop
                   lock={lock}
                   onOpenLockSettings={() => setShowPinSettings(true)}
+                  onOpenAccountSettings={() => setShowAccountSettings(true)}
                   onLogout={onLogout}
                 />
               )}
@@ -2049,12 +2074,19 @@ function AppInner({ onLogout }: { onLogout: () => void }) {
           }}
         />
       )}
+      {showAccountSettings && username && (
+        <AccountSettingsDialog
+          username={username}
+          onClose={() => setShowAccountSettings(false)}
+          onUsernameChanged={onUsernameChanged}
+        />
+      )}
     </>
   );
 }
 
 function AuthGate() {
-  const { state, onAuthenticated, logout } = useAuth();
+  const { state, onAuthenticated, logout, updateUsername } = useAuth();
   const qc = useQueryClient();
 
   // Every account-scoped query (entries, notes, pin) shares the same cache
@@ -2094,7 +2126,7 @@ function AuthGate() {
     return <AuthScreen onAuthenticated={handleAuthenticated} />;
   }
 
-  return <AppInner onLogout={handleLogout} />;
+  return <AppInner onLogout={handleLogout} username={state.username} onUsernameChanged={updateUsername} />;
 }
 
 function App() {

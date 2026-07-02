@@ -17,6 +17,7 @@ export interface AuthContextValue {
   state: AuthState;
   onAuthenticated: (token: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUsername: (username: string) => void;
 }
 
 const AUTH_TOKEN_KEY = "journal_auth_token";
@@ -103,7 +104,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ phase: "unauthenticated", username: null });
   }, []);
 
-  return createElement(AuthContext.Provider, { value: { state, onAuthenticated, logout } }, children);
+  // Username changes don't rotate the session token, so we only need to
+  // update the locally cached username, not the stored auth token.
+  const updateUsername = useCallback((username: string) => {
+    setState(prev => (prev.phase === "authenticated" ? { ...prev, username } : prev));
+  }, []);
+
+  return createElement(
+    AuthContext.Provider,
+    { value: { state, onAuthenticated, logout, updateUsername } },
+    children,
+  );
 }
 
 export function useAuth(): AuthContextValue {

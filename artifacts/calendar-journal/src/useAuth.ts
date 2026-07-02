@@ -61,5 +61,11 @@ export function useAuth() {
     setState({ phase: "unauthenticated", username: null });
   }, []);
 
-  return { state, onAuthenticated, logout };
+  // Username changes don't rotate the session token, so we only need to
+  // update the locally cached username, not the stored auth token.
+  const updateUsername = useCallback((username: string) => {
+    setState(prev => (prev.phase === "authenticated" ? { ...prev, username } : prev));
+  }, []);
+
+  return { state, onAuthenticated, logout, updateUsername };
 }

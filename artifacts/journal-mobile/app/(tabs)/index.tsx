@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import { useListEntries } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { MobilePinSettings } from "@/components/MobilePinSettings";
+import { MobileAccountSettings } from "@/components/MobileAccountSettings";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -46,7 +47,8 @@ export default function CalendarScreen() {
 
   const { data: entries, isLoading, isError, refetch } = useListEntries();
   const [showPinSettings, setShowPinSettings] = useState(false);
-  const { logout } = useAuth();
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const { state, logout, updateUsername } = useAuth();
   const queryClient = useQueryClient();
 
   // Clear all cached account-scoped data (entries, notes, pin status) on
@@ -234,6 +236,16 @@ export default function CalendarScreen() {
           <Text style={styles.notesBtnIcon}>🔑</Text>
         </Pressable>
         <Pressable
+          testID="account-settings-btn"
+          onPress={() => {
+            Haptics.selectionAsync();
+            setShowAccountSettings(true);
+          }}
+          style={styles.notesBtn}
+        >
+          <Text style={styles.notesBtnIcon}>👤</Text>
+        </Pressable>
+        <Pressable
           testID="new-entry-btn"
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -249,6 +261,13 @@ export default function CalendarScreen() {
         visible={showPinSettings}
         onClose={() => setShowPinSettings(false)}
         onLogout={handleLogout}
+      />
+
+      <MobileAccountSettings
+        visible={showAccountSettings}
+        username={state.username}
+        onClose={() => setShowAccountSettings(false)}
+        onUsernameChanged={updateUsername}
       />
     </View>
   );
