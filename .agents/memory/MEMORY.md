@@ -4,3 +4,4 @@
 - [Multi-tenant React Query cache leakage](multi-tenant-react-query-cache-leakage.md) — adding per-user auth on top of an existing QueryClient needs queryClient.clear() on login/logout or accounts can see each other's cached data.
 - [Artifact services already have workflows](artifact-services-existing-workflows.md) — before calling configureWorkflow for a registered artifact's service, check listWorkflows() first; it's likely already running under a name like "artifacts/<slug>: <service>".
 - [Don't infer one-time migration state from row counts](one-time-migration-durable-marker.md) — "is this table empty?" as a proxy for "has this migration run?" breaks permanently once rows can be deleted; use an explicit durable marker instead.
+- [api-server DB integration tests use an isolated schema](api-server-db-integration-tests.md) — repoint DATABASE_URL's search_path to a throwaway schema before import so tests hit the real DB without touching real data.
