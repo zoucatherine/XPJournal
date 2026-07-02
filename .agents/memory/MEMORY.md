@@ -1,2 +1,3 @@
 - [Stale tsbuildinfo hides missing lib dist files](stale-tsbuildinfo-lib-dist.md) — tsc --build can report success while `.d.ts` files are actually missing; clear tsbuildinfo caches when lib dist/ looks incomplete.
 - [health.ts Express v5 typing](health-ts-express-v5-typing.md) — never add explicit Request/Response annotations to Express v5 route handlers; this repo's health.ts keeps getting this regression reintroduced via merges.
+- [Vercel serverless isolated typecheck](vercel-serverless-isolated-typecheck.md) — Vercel type-checks /api/*.ts separately from buildCommand and can't resolve pnpm workspace packages; use a plain .mjs importing the bundled dist output instead.
