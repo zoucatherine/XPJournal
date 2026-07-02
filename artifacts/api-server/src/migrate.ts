@@ -33,6 +33,35 @@ export async function runMigrations(): Promise<void> {
       )
     `);
 
+    // Creates journal_entries/sticky_notes in their pre-auth (legacy) shape
+    // if they don't already exist yet, e.g. on a brand-new database (such as
+    // an external Postgres instance used for a non-Replit deployment target)
+    // that never went through the original pre-auth drizzle-kit push. No-ops
+    // on databases that already have these tables from that earlier schema.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS journal_entries (
+        date TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        mood TEXT,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS sticky_notes (
+        id TEXT PRIMARY KEY,
+        content TEXT NOT NULL DEFAULT '',
+        color TEXT NOT NULL DEFAULT 'yellow',
+        pos_x INTEGER NOT NULL DEFAULT 200,
+        pos_y INTEGER NOT NULL DEFAULT 200,
+        size_w INTEGER,
+        size_h INTEGER,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )
+    `);
+
     // Add nullable user_id columns to legacy tables. These are tightened to
     // NOT NULL (and folded into composite primary keys) once the first
     // account is created and legacy rows are backfilled — see

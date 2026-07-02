@@ -38,7 +38,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- **Vercel deployment needs its own external Postgres, not Replit's dev `DATABASE_URL`.** Replit's built-in/managed Postgres (dev DB, hostname like `helium`) is only reachable from inside Replit's network — it cannot be reached from Vercel or any other external host. Pointing Vercel's `DATABASE_URL` at the Replit dev connection string causes signup/login to fail with a 500 (`getaddrinfo ENOTFOUND helium` in the Vercel function logs).
+  - Fix: provision a separate, externally-reachable Postgres (e.g. Neon, Supabase, or Vercel's own Postgres marketplace add-on) and set **that** connection string as `DATABASE_URL` in the Vercel project's environment variables. Also set `SESSION_SECRET` (any long random string) in Vercel — it's required for JWT signing and the app throws at startup if it's missing.
+  - The app's `runMigrations()` (in `artifacts/api-server/src/migrate.ts`) auto-creates all required tables (including `journal_entries`/`sticky_notes` in their pre-auth shape) on first request, so a brand-new empty external database works out of the box — no manual `drizzle-kit push` needed before first use.
+  - After setting env vars in Vercel, trigger a redeploy for them to take effect.
 
 ## Pointers
 
