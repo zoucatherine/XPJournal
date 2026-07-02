@@ -1,0 +1,45 @@
+This confirms precisely what is going wrong with your monorepo setup. The two errors are completely intertwined:
+
+   1. Why _req and res are implicitly any: In your previous step, you dropped the explicit parameter types so Express could contextually infer them. However, because TypeScript cannot successfully compile @workspace/api-zod first, the entire file context breaks. When a file contains an unresolvable top-level import error, TypeScript's contextual inference engine gives up completely, cascading into implicit any errors on your parameters. [1, 2] 
+   2. Why HealthCheckResponse is missing: In pnpm monorepos, local packages references (like @workspace/api-zod) require their source files to be compiled into .d.ts declaration files before other apps can read them. Because Vercel builds packages in an isolated context, your api-server is reading an empty or non-existent build directory from the api-zod package folder. [3] 
+
+Here is how to definitively fix both errors at once.
+## Step 1: Explicitly Type the Route Parameters
+To completely bypass the contextual typing failure caused by the monorepo import conflict, import Express's native v5 types directly and apply them to the callback parameters.
+Update artifacts/api-server/src/routes/health.ts to this code:
+
+import { Router } from "express";// 1. Explicitly import Request and Response type structures directly from expressimport type { Request, Response } from "express";import { HealthCheckResponse } from "@workspace/api-zod";
+const router = Router();
+// 2. Add explicit inline types to satisfy noImplicitAny
+router.get("/healthz", (_req: Request, res: Response) => {
+  const data = HealthCheckResponse.parse({ status: "ok" });
+  res.json(data);
+});
+export default router;
+
+
+* Why this works: This instantly kills the TS7006 implicit any error, even if the Zod import above it is temporarily unresolvable during the evaluation stage.
+
+## Step 2: Fix the Monorepo Build Exports
+If Vercel still logs TS2305: Module '@workspace/api-zod' has no exported member 'HealthCheckResponse' after applying Step 1, it means TypeScript is looking at the built files (dist/) instead of the source files, and those built files are out of date or missing.
+## Check A: The Barrel Export
+Open the root entry point of your @workspace/api-zod package (usually packages/api-zod/src/index.ts or similar). Make sure you are explicitly exporting the file containing your schemas:
+
+// Inside your @workspace/api-zod entry point file:export * from "./your-schema-file-name.js"; // Or explicitly:export { HealthCheckResponse } from "./your-schema-file-name.js";
+
+## Check B: Force the Monorepo Build Order
+Vercel needs to know that it must build @workspace/api-zod before it tries to compile @workspace/api-server.
+
+   1. Open artifacts/api-server/package.json.
+   2. Verify that @workspace/api-zod is strictly in your "dependencies" array, not "devDependencies".
+   3. In your Vercel Dashboard, verify that your global Build Command runs a recursive pipeline build that compiles dependencies in the correct order, such as:
+   
+   pnpm --filter=@workspace/api-server... build
+   
+   (The ... after the package name tells pnpm to build all of api-server's local dependencies first).
+
+Deploy these adjustments, and your pipeline should finally hit a clean green build status! Let me know if you run into any other roadblocks.
+
+[1] [https://www.youtube.com](https://www.youtube.com/watch?v=72fsyTVnX-g&t=53)
+[2] [https://www.typescriptlang.org](https://www.typescriptlang.org/tsconfig/noImplicitAny.html)
+[3] [https://github.com](https://github.com/orgs/pnpm/discussions/4331)

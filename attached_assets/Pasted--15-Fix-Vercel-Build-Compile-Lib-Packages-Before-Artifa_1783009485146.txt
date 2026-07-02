@@ -1,0 +1,25 @@
+#15 - Fix Vercel Build: Compile Lib Packages Before Artifacts
+What & Why
+The root build:vercel script only builds artifacts/api-server and artifacts/calendar-journal — it never compiles lib/api-zod or lib/db first. On a clean Vercel clone, those dist/ folders are empty. TypeScript project references in api-server resolve @workspace/api-zod and @workspace/db through those missing declaration files, causing "no exported member" errors (e.g. HealthCheckResponse, settingsTable) even though the source exports them correctly. The cascade also breaks contextual type inference, producing secondary errors like Property 'json' does not exist on type 'Response'.
+
+The fix is to run tsc --build for the lib packages before the artifact build step in build:vercel, so declaration files always exist when api-server compiles.
+
+Done looks like
+Running pnpm run build:vercel on a clean checkout (no pre-existing dist/ in lib/) completes without TypeScript errors
+Vercel deployment builds succeed without TS2305 or TS2339 errors in health.ts or any other consumer of lib/api-zod or lib/db
+No changes needed to health.ts or the lib source files — the build order fix is sufficient
+Out of scope
+Changing the source code of health.ts (already correct)
+Adding new exports to lib/api-zod (already correct)
+Changing how the dev workflow builds locally
+Steps
+Update build:vercel in root package.json — Prepend pnpm run typecheck:libs (which runs tsc --build at root and compiles all lib packages in dependency order) before the pnpm artifact build step. The updated script should be: pnpm run typecheck:libs && pnpm -r --filter ./artifacts/api-server --filter ./artifacts/calendar-journal --if-present run build.
+
+Verify locally — Run rm -rf lib/api-zod/dist lib/db/dist && pnpm run build:vercel to simulate a clean Vercel build and confirm no TypeScript errors appear.
+
+Relevant files
+package.json
+lib/api-zod/tsconfig.json
+lib/api-zod/package.json
+artifacts/api-server/tsconfig.json
+artifacts/api-server/src/routes/health.ts
