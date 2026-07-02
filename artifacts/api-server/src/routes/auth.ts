@@ -41,9 +41,6 @@ authRouter.post("/auth/signup", async (req, res) => {
       return;
     }
 
-    const countResult = await client.query("SELECT COUNT(*)::int AS count FROM users");
-    const isFirstUser = countResult.rows[0]?.count === 0;
-
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const insertResult = await client.query(
       "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username",
@@ -51,9 +48,11 @@ authRouter.post("/auth/signup", async (req, res) => {
     );
     const user = insertResult.rows[0] as { id: string; username: string };
 
-    if (isFirstUser) {
-      await backfillFirstUser(client, user.id);
-    }
+    // Safe to call on every signup: backfillFirstUser tracks completion via
+    // a durable schema_migrations row and is a no-op after the first
+    // successful run, instead of relying on "is the users table empty?"
+    // (which regresses if the sole user account is ever deleted).
+    await backfillFirstUser(client, user.id);
 
     await client.query("COMMIT");
 
