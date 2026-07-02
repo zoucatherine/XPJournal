@@ -59,4 +59,16 @@ app.use((_req: any, _res: any, next: (err?: any) => void) => {
 });
 app.use("/api", router);
 
+// Catches errors passed to next(err) (e.g. a failed ensureMigrations() call
+// on cold start) that would otherwise fall through to Express's default HTML
+// error page. Logs the real error server-side and always responds with JSON
+// so API clients never have to parse an HTML error body.
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  (req as any).log?.error({ err }, "Unhandled error") ?? logger.error({ err }, "Unhandled error");
+  if (res.headersSent) {
+    return;
+  }
+  res.status(500).json({ error: "Internal server error" });
+});
+
 export default app;

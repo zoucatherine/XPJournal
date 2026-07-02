@@ -11,6 +11,7 @@ import {
 import { eq } from "drizzle-orm";
 import { signSessionToken, requireAuth } from "../middleware/auth.js";
 import { backfillFirstUser } from "../migrate.js";
+import { logger } from "../lib/logger.js";
 
 const authRouter = Router();
 
@@ -60,6 +61,7 @@ authRouter.post("/auth/signup", async (req, res) => {
     res.status(201).json({ token, username: user.username });
   } catch (err) {
     await client.query("ROLLBACK");
+    logger.error({ err }, "Signup failed");
     res.status(500).json({ error: "Failed to create account" });
   } finally {
     client.release();
@@ -92,7 +94,8 @@ authRouter.post("/auth/login", async (req, res) => {
 
     const token = signSessionToken(user.id);
     res.json({ token, username: user.username });
-  } catch {
+  } catch (err) {
+    logger.error({ err }, "Login failed");
     res.status(500).json({ error: "Failed to log in" });
   }
 });
@@ -105,7 +108,8 @@ authRouter.get("/auth/me", requireAuth, async (req, res) => {
       return;
     }
     res.json({ username: user.username });
-  } catch {
+  } catch (err) {
+    logger.error({ err }, "Fetching account failed");
     res.status(500).json({ error: "Failed to fetch account" });
   }
 });
@@ -165,6 +169,7 @@ authRouter.patch("/auth/username", requireAuth, async (req, res) => {
       res.status(409).json({ error: "That username is already taken" });
       return;
     }
+    logger.error({ err }, "Updating username failed");
     res.status(500).json({ error: "Failed to update username" });
   }
 });
@@ -198,7 +203,8 @@ authRouter.patch("/auth/password", requireAuth, async (req, res) => {
       .where(eq(usersTable.id, user.id));
 
     res.json({ ok: true });
-  } catch {
+  } catch (err) {
+    logger.error({ err }, "Updating password failed");
     res.status(500).json({ error: "Failed to update password" });
   }
 });
