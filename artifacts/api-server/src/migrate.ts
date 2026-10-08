@@ -88,6 +88,7 @@ export async function runMigrations(): Promise<void> {
         deleted_at TIMESTAMPTZ
       )
     `);
+    await client.query(`ALTER TABLE journal_attachments ADD COLUMN IF NOT EXISTS caption TEXT CHECK (char_length(caption) <= 200)`);
     await client.query(`CREATE INDEX IF NOT EXISTS journal_attachments_owner_date ON journal_attachments(user_id, date)`);
     await client.query(`CREATE INDEX IF NOT EXISTS journal_attachments_cleanup ON journal_attachments(expires_at, deleted_at)`);
 

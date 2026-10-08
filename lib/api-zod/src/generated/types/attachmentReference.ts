@@ -13,4 +13,9 @@ export interface AttachmentReference {
      * @minimum 0
      */
   offset: number;
+  /**
+     * Optional personal label. Null or empty clears it; omission preserves the saved caption.
+     * @maxLength 200
+     */
+  caption?: string | null;
 }

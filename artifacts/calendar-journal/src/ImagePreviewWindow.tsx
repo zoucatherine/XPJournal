@@ -74,7 +74,7 @@ export function ImagePreviewWindow({ items, index, onIndex, onClose }: {
 
   return (
     <div
-      ref={winRef} tabIndex={-1} role="dialog" aria-label={`Image preview: ${item.name}`}
+      ref={winRef} tabIndex={-1} role="dialog" aria-label={`Image preview: ${item.caption?.trim() || item.name}`}
       onKeyDown={onKey} className="xp-window" data-testid="window-image-preview"
       style={{ position: "fixed", left: pos.x, top: pos.y, width: `min(${W}px, 100vw)`, height: `min(${H}px, calc(100dvh - ${TASKBAR}px))`, zIndex: 60, outline: "none" }}
     >
@@ -94,9 +94,14 @@ export function ImagePreviewWindow({ items, index, onIndex, onClose }: {
           ) : !url ? (
             <div style={{ fontFamily: "Tahoma, sans-serif", fontSize: 12 }} aria-busy="true">Loading image...</div>
           ) : (
-            <img src={url} alt={item.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }} />
+            <img src={url} alt={item.caption?.trim() || item.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }} />
           )}
         </div>
+        {item.caption?.trim() && (
+          <div data-testid="image-preview-caption" style={{ fontFamily: "Tahoma, sans-serif", fontSize: 12, color: "var(--xp-window-text)", overflowWrap: "anywhere", maxHeight: 80, overflowY: "auto", flexShrink: 0 }}>
+            {item.caption}
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "Tahoma, sans-serif", fontSize: 11, color: "var(--xp-window-text)" }}>
           <button type="button" className="xp-button" style={nav} disabled={items.length < 2} onClick={() => go(-1)} aria-label="Previous image">Prev</button>
           <button type="button" className="xp-button" style={nav} disabled={items.length < 2} onClick={() => go(1)} aria-label="Next image">Next</button>

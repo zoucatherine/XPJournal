@@ -9,6 +9,7 @@ export const journalAttachmentsTable = pgTable("journal_attachments", {
   userId: uuid("user_id").references(() => usersTable.id, { onDelete: "set null" }),
   date: text("date").notNull(),
   name: text("name").notNull(),
+  caption: text("caption"),
   size: integer("size").notNull(),
   contentType: text("content_type").notNull(),
   objectPath: text("object_path").notNull(),

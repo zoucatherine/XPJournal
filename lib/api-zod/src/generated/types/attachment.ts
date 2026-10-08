@@ -10,6 +10,8 @@ import type { AttachmentContentType } from './attachmentContentType';
 export interface Attachment {
   id: string;
   name: string;
+  /** @maxLength 200 */
+  caption?: string | null;
   size: number;
   contentType: AttachmentContentType;
 }

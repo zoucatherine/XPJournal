@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Caret, Doc } from "./bodyModel";
+import { CAPTION_LIMIT } from "./bodyModel";
 import { formatKB } from "./imageCompress";
 
 function Seg({ value, first, disabled, onChange, onCaret, onEdge, refCb }: {
@@ -35,9 +36,10 @@ function Seg({ value, first, disabled, onChange, onCaret, onEdge, refCb }: {
   );
 }
 
-export function BodyEditor({ doc, disabled, caretRef, onText, onPreview, onReplace, onRemove }: {
+export function BodyEditor({ doc, disabled, caretRef, onText, onCaption, onPreview, onReplace, onRemove }: {
   doc: Doc; disabled: boolean; caretRef: { current: Caret };
   onText: (i: number, v: string) => void;
+  onCaption: (i: number, v: string) => void;
   onPreview: (id: string) => void; onReplace: (i: number) => void; onRemove: (i: number) => void;
 }) {
   const refs = useRef<(HTMLTextAreaElement | null)[]>([]);
@@ -67,12 +69,25 @@ export function BodyEditor({ doc, disabled, caretRef, onText, onPreview, onRepla
             >
               <button type="button" className="xp-button" style={{ ...btn, fontWeight: "bold", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
                 onClick={() => onPreview(doc.imgs[i].id)} title="Open in preview window" data-testid={`button-open-image-${i}`}>
-                Open attachment — {doc.imgs[i].name}
+                Open attachment — {doc.imgs[i].caption?.trim() || doc.imgs[i].name}
               </button>
               <span style={{ opacity: 0.75 }}>{formatKB(doc.imgs[i].size)}</span>
               <span style={{ flex: 1 }} />
               <button type="button" className="xp-button" style={btn} disabled={disabled} onClick={() => onReplace(i)} data-testid={`button-replace-image-${i}`}>Replace</button>
               <button type="button" className="xp-button" style={btn} disabled={disabled} onClick={() => onRemove(i)} data-testid={`button-remove-image-${i}`}>Remove</button>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", flexWrap: "wrap" }}>
+                Caption (optional)
+                <input
+                  type="text" className="xp-input" value={doc.imgs[i].caption ?? ""}
+                  disabled={disabled} maxLength={CAPTION_LIMIT}
+                  onChange={e => onCaption(i, e.target.value)}
+                  aria-label={`Caption for ${doc.imgs[i].name}`}
+                  placeholder="Photo from today’s walk"
+                  data-testid={`input-image-caption-${i}`}
+                  style={{ flex: 1, minWidth: 100, fontSize: 12 }}
+                />
+                <span style={{ opacity: 0.75 }}>{(doc.imgs[i].caption ?? "").length}/{CAPTION_LIMIT}</span>
+              </label>
             </div>
           )}
         </div>

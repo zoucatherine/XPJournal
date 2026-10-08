@@ -1,4 +1,5 @@
-export interface AttItem { id: string; name: string; size: number; contentType: string }
+export const CAPTION_LIMIT = 200;
+export interface AttItem { id: string; name: string; size: number; contentType: string; caption?: string | null }
 /** texts.length === imgs.length + 1; imgs[i] sits between texts[i] and texts[i+1]. */
 export interface Doc { texts: string[]; imgs: AttItem[] }
 export interface Caret { seg: number; pos: number }
@@ -11,7 +12,7 @@ export function docFromEntry(body: string, atts?: (AttItem & { offset: number })
   for (const { a } of list) {
     const o = Math.min(Math.max(a.offset, last), body.length);
     texts.push(body.slice(last, o));
-    imgs.push({ id: a.id, name: a.name, size: a.size, contentType: a.contentType });
+    imgs.push({ id: a.id, name: a.name, size: a.size, contentType: a.contentType, ...(a.caption !== undefined ? { caption: a.caption } : {}) });
     last = o;
   }
   texts.push(body.slice(last));
@@ -20,11 +21,11 @@ export function docFromEntry(body: string, atts?: (AttItem & { offset: number })
 
 export const docBody = (d: Doc) => d.texts.join("");
 
-export function docRefs(d: Doc): { id: string; offset: number }[] {
+export function docRefs(d: Doc): { id: string; offset: number; caption?: string | null }[] {
   let off = 0;
   return d.imgs.map((a, i) => {
     off += d.texts[i].length;
-    return { id: a.id, offset: off };
+    return { id: a.id, offset: off, ...(a.caption !== undefined ? { caption: a.caption } : {}) };
   });
 }
 
@@ -49,8 +50,13 @@ export function removeAt(d: Doc, i: number): Doc {
 
 export const replaceAt = (d: Doc, i: number, a: AttItem): Doc => {
   const imgs = [...d.imgs];
-  imgs[i] = a;
+  imgs[i] = { ...a, ...(d.imgs[i].caption !== undefined ? { caption: d.imgs[i].caption } : {}) };
   return { texts: d.texts, imgs };
 };
+
+export const captionAt = (d: Doc, i: number, caption: string): Doc => ({
+  texts: d.texts,
+  imgs: d.imgs.map((a, k) => k === i ? { ...a, caption: caption.slice(0, CAPTION_LIMIT) } : a),
+});
 
 export const wordCount = (body: string) => (body.trim() === "" ? 0 : body.trim().split(/\s+/).length);

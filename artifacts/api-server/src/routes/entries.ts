@@ -104,7 +104,7 @@ entriesRouter.post("/entries", async (req, res) => {
         await validateReferences(client, userId, parsed.data.date, parsed.data.body, refs);
         await client.query(
           `INSERT INTO journal_entries(user_id,date,title,body,mood,attachment_refs) VALUES($1,$2,$3,$4,$5,$6::jsonb)`,
-          [userId, parsed.data.date, parsed.data.title, parsed.data.body, parsed.data.mood ?? null, JSON.stringify(refs)],
+          [userId, parsed.data.date, parsed.data.title, parsed.data.body, parsed.data.mood ?? null, JSON.stringify(refs.map(({ id, offset }) => ({ id, offset })))],
         );
         await commitReferences(client, userId, parsed.data.date, [], refs);
         await client.query("COMMIT");
@@ -145,7 +145,7 @@ entriesRouter.put("/entries/:date", async (req, res) => {
         await client.query(
           `UPDATE journal_entries SET title=$3,body=$4,mood=CASE WHEN $5 THEN $6 ELSE mood END,
            attachment_refs=$7::jsonb,updated_at=NOW() WHERE user_id=$1 AND date=$2`,
-          [userId, date, parsed.data.title, parsed.data.body, parsed.data.mood !== undefined, parsed.data.mood ?? null, JSON.stringify(refs)],
+          [userId, date, parsed.data.title, parsed.data.body, parsed.data.mood !== undefined, parsed.data.mood ?? null, JSON.stringify(refs.map(({ id, offset }) => ({ id, offset })))],
         );
         await commitReferences(client, userId, date, previous, refs);
         await client.query("COMMIT");

@@ -12,6 +12,8 @@ export interface EntryAttachment {
   /** @minimum 0 */
   offset: number;
   name: string;
+  /** @maxLength 200 */
+  caption?: string | null;
   size: number;
   contentType: EntryAttachmentContentType;
 }

@@ -38,9 +38,14 @@ export const FinalizeAttachmentParams = zod.object({
   "id": zod.coerce.string().uuid()
 })
 
+export const finalizeAttachmentResponseCaptionMax = 200;
+
+
+
 export const FinalizeAttachmentResponse = zod.object({
   "id": zod.string().uuid(),
   "name": zod.string(),
+  "caption": zod.string().max(finalizeAttachmentResponseCaptionMax).nullish(),
   "size": zod.number(),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })
@@ -85,6 +90,8 @@ export const SearchEntriesQueryParams = zod.object({
 
 export const searchEntriesResponseAttachmentsItemOffsetMin = 0;
 
+export const searchEntriesResponseAttachmentsItemCaptionMax = 200;
+
 
 
 export const SearchEntriesResponseItem = zod.object({
@@ -95,6 +102,7 @@ export const SearchEntriesResponseItem = zod.object({
   "id": zod.string().uuid(),
   "offset": zod.number().min(searchEntriesResponseAttachmentsItemOffsetMin),
   "name": zod.string(),
+  "caption": zod.string().max(searchEntriesResponseAttachmentsItemCaptionMax).nullish(),
   "size": zod.number(),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })).optional(),
@@ -111,6 +119,8 @@ export const SearchEntriesResponse = zod.array(SearchEntriesResponseItem)
  */
 export const listEntriesResponseAttachmentsItemOffsetMin = 0;
 
+export const listEntriesResponseAttachmentsItemCaptionMax = 200;
+
 
 
 export const ListEntriesResponseItem = zod.object({
@@ -121,6 +131,7 @@ export const ListEntriesResponseItem = zod.object({
   "id": zod.string().uuid(),
   "offset": zod.number().min(listEntriesResponseAttachmentsItemOffsetMin),
   "name": zod.string(),
+  "caption": zod.string().max(listEntriesResponseAttachmentsItemCaptionMax).nullish(),
   "size": zod.number(),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })).optional(),
@@ -137,6 +148,8 @@ export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
  */
 export const createEntryBodyAttachmentsItemOffsetMin = 0;
 
+export const createEntryBodyAttachmentsItemCaptionMax = 200;
+
 export const createEntryBodyAttachmentsMax = 10;
 
 
@@ -147,12 +160,15 @@ export const CreateEntryBody = zod.object({
   "body": zod.string(),
   "attachments": zod.array(zod.object({
   "id": zod.string().uuid(),
-  "offset": zod.number().min(createEntryBodyAttachmentsItemOffsetMin).describe('UTF-16 offset in plain-text body')
+  "offset": zod.number().min(createEntryBodyAttachmentsItemOffsetMin).describe('UTF-16 offset in plain-text body'),
+  "caption": zod.string().max(createEntryBodyAttachmentsItemCaptionMax).nullish().describe('Optional personal label. Null or empty clears it; omission preserves the saved caption.')
 })).max(createEntryBodyAttachmentsMax).optional(),
   "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)')
 })
 
 export const createEntryResponseAttachmentsItemOffsetMin = 0;
+
+export const createEntryResponseAttachmentsItemCaptionMax = 200;
 
 
 
@@ -164,6 +180,7 @@ export const CreateEntryResponse = zod.object({
   "id": zod.string().uuid(),
   "offset": zod.number().min(createEntryResponseAttachmentsItemOffsetMin),
   "name": zod.string(),
+  "caption": zod.string().max(createEntryResponseAttachmentsItemCaptionMax).nullish(),
   "size": zod.number(),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })).optional(),
@@ -182,6 +199,8 @@ export const GetEntryParams = zod.object({
 
 export const getEntryResponseAttachmentsItemOffsetMin = 0;
 
+export const getEntryResponseAttachmentsItemCaptionMax = 200;
+
 
 
 export const GetEntryResponse = zod.object({
@@ -192,6 +211,7 @@ export const GetEntryResponse = zod.object({
   "id": zod.string().uuid(),
   "offset": zod.number().min(getEntryResponseAttachmentsItemOffsetMin),
   "name": zod.string(),
+  "caption": zod.string().max(getEntryResponseAttachmentsItemCaptionMax).nullish(),
   "size": zod.number(),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })).optional(),
@@ -210,6 +230,8 @@ export const UpdateEntryParams = zod.object({
 
 export const updateEntryBodyAttachmentsItemOffsetMin = 0;
 
+export const updateEntryBodyAttachmentsItemCaptionMax = 200;
+
 export const updateEntryBodyAttachmentsMax = 10;
 
 
@@ -219,12 +241,15 @@ export const UpdateEntryBody = zod.object({
   "body": zod.string(),
   "attachments": zod.array(zod.object({
   "id": zod.string().uuid(),
-  "offset": zod.number().min(updateEntryBodyAttachmentsItemOffsetMin).describe('UTF-16 offset in plain-text body')
+  "offset": zod.number().min(updateEntryBodyAttachmentsItemOffsetMin).describe('UTF-16 offset in plain-text body'),
+  "caption": zod.string().max(updateEntryBodyAttachmentsItemCaptionMax).nullish().describe('Optional personal label. Null or empty clears it; omission preserves the saved caption.')
 })).max(updateEntryBodyAttachmentsMax).optional().describe('Required when editing an entry that already contains attachments; omission is rejected to protect older clients.'),
   "mood": zod.string().nullish().describe('Mood emoji tag (e.g. 😊)')
 })
 
 export const updateEntryResponseAttachmentsItemOffsetMin = 0;
+
+export const updateEntryResponseAttachmentsItemCaptionMax = 200;
 
 
 
@@ -236,6 +261,7 @@ export const UpdateEntryResponse = zod.object({
   "id": zod.string().uuid(),
   "offset": zod.number().min(updateEntryResponseAttachmentsItemOffsetMin),
   "name": zod.string(),
+  "caption": zod.string().max(updateEntryResponseAttachmentsItemCaptionMax).nullish(),
   "size": zod.number(),
   "contentType": zod.enum(['image/jpeg', 'image/png', 'image/webp'])
 })).optional(),

@@ -7,15 +7,15 @@ import { logger } from "./logger.js";
 export class AttachmentError extends Error {
   constructor(message: string, public status = 400) { super(message); }
 }
-export type AttachmentRef = { id: string; offset: number };
+export type AttachmentRef = { id: string; offset: number; caption?: string | null };
 export type AttachmentRow = {
-  id: string; user_id: string | null; date: string; name: string; size: number;
+  id: string; user_id: string | null; date: string; name: string; caption: string | null; size: number;
   content_type: string; object_path: string; upload_path: string;
   status: string; expires_at: Date | null; deleted_at: Date | null;
 };
 
 export function attachmentMetadata(row: AttachmentRow) {
-  return { id: row.id, name: row.name, size: row.size, contentType: row.content_type };
+  return { id: row.id, name: row.name, caption: row.caption ?? null, size: row.size, contentType: row.content_type };
 }
 
 export async function validateImage(bytes: Buffer, contentType: string) {
@@ -64,6 +64,14 @@ export async function commitReferences(client: pg.PoolClient, userId: string, da
     "UPDATE journal_attachments SET expires_at=NULL WHERE user_id=$1 AND id=ANY($2::uuid[])",
     [userId, ids],
   );
+  // Caption edits participate in the entry transaction, never an unsaved
+  // preview edit. Old clients that omit this field preserve existing labels.
+  for (const ref of next) {
+    if (ref.caption !== undefined) await client.query(
+      "UPDATE journal_attachments SET caption=$1 WHERE user_id=$2 AND date=$3 AND id=$4",
+      [ref.caption?.trim() || null, userId, date, ref.id],
+    );
+  }
   const removed = previous.filter(r => !ids.includes(r.id)).map(r => r.id);
   if (removed.length) await client.query(
     "UPDATE journal_attachments SET deleted_at=NOW() WHERE user_id=$1 AND date=$2 AND id=ANY($3::uuid[])",

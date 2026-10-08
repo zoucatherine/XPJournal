@@ -1,8 +1,27 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { docFromEntry, docBody, docRefs, insertAt, removeAt, replaceAt, wordCount } from "./bodyModel.ts";
+import { docFromEntry, docBody, docRefs, insertAt, removeAt, replaceAt, captionAt, CAPTION_LIMIT, wordCount } from "./bodyModel.ts";
 
 const image = (id) => ({ id, name: `${id}.png`, size: 123, contentType: "image/png" });
+test("captions round-trip independently from writing, offsets and caret segments", () => {
+  const body = "A walk 😊\nRemember this";
+  const original = docFromEntry(body, [
+    { ...image("first"), offset: 9 },
+    { ...image("second"), offset: 9, caption: null },
+  ]);
+  const doc = captionAt(original, 0, "Photo from today’s walk");
+  assert.equal(doc.texts, original.texts);
+  assert.equal(docBody(doc), body);
+  assert.deepEqual(docRefs(doc), [
+    { id: "first", offset: 9, caption: "Photo from today’s walk" },
+    { id: "second", offset: 9, caption: null },
+  ]);
+  assert.deepEqual(docFromEntry(body, doc.imgs.map((a, i) => ({ ...a, ...docRefs(doc)[i] }))), doc);
+  assert.equal(replaceAt(doc, 0, image("replacement")).imgs[0].caption, doc.imgs[0].caption);
+  assert.equal(captionAt(doc, 0, "").imgs[0].caption, "");
+  assert.equal(captionAt(doc, 0, "x".repeat(300)).imgs[0].caption.length, CAPTION_LIMIT);
+  assert.equal(original.imgs[0].caption, undefined);
+});
 test("legacy text is unchanged", () => {
   const body = "Dear diary...\nA new day.";
   const doc = docFromEntry(body);

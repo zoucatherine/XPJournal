@@ -3,6 +3,12 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
 
+const attachmentReferenceSchema = z.object({
+  id: z.string().uuid(),
+  offset: z.number().int().nonnegative(),
+  caption: z.string().max(200).nullable().optional(),
+});
+
 export const journalEntriesTable = pgTable(
   "journal_entries",
   {
@@ -26,14 +32,14 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntriesTable).
   updatedAt: true,
   attachmentRefs: true,
 }).extend({
-  attachments: z.array(z.object({ id: z.string().uuid(), offset: z.number().int().nonnegative() })).max(10).optional(),
+  attachments: z.array(attachmentReferenceSchema).max(10).optional(),
 });
 
 export const updateJournalEntrySchema = z.object({
   title: z.string(),
   body: z.string(),
   mood: z.string().nullable().optional(),
-  attachments: z.array(z.object({ id: z.string().uuid(), offset: z.number().int().nonnegative() })).max(10).optional(),
+  attachments: z.array(attachmentReferenceSchema).max(10).optional(),
 });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;

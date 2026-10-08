@@ -135,6 +135,36 @@ describe("private inline journal attachments", () => {
     expect((await request("/entries/2026-10-08", owner, "DELETE")).status).toBe(204);
     expect((await request(`/attachments/${second}/image`, owner)).status).toBe(404);
   });
+  it("saves, edits and clears captions atomically without changing writing or offsets", async () => {
+    const date = "2026-10-10";
+    const id = await reserve(image, date);
+    expect((await finalize(id)).status).toBe(200);
+    const body = "Before 😊\nAfter";
+    const refs = (caption?: string | null) => [{ id, offset: 9, ...(caption !== undefined ? { caption } : {}) }];
+    const save = (caption?: string | null) => request(`/entries/${date}`, owner, "PUT", { title: "Captioned", body, attachments: refs(caption) });
+    const load = async () => (await (await request(`/entries/${date}`, owner)).json()) as {
+      body: string; attachments: { id: string; offset: number; caption: string | null }[];
+    };
+    expect((await request("/entries", owner, "POST", { date, title: "Captioned", body, attachments: refs("Photo from today’s walk") })).status).toBe(201);
+    expect(await load()).toMatchObject({ body, attachments: refs("Photo from today’s walk") });
+    expect((await finalize(id)).status).toBe(200);
+    expect(await (await finalize(id)).json()).toMatchObject({ caption: "Photo from today’s walk" });
+    expect((await save("x".repeat(201))).status).toBe(400);
+    expect((await save(123 as unknown as string)).status).toBe(400);
+    expect(await load()).toMatchObject({ body, attachments: refs("Photo from today’s walk") });
+    expect((await request(`/entries/${date}`, owner, "PUT", { title: "Mobile", body })).status).toBe(409);
+    expect((await request(`/entries/${date}`, other, "PUT", { title: "Other", body, attachments: refs("Stolen") })).status).toBe(404);
+    expect((await save("x".repeat(200))).status).toBe(200);
+    expect((await save()).status).toBe(200);
+    expect(await load()).toMatchObject({ body, attachments: refs("x".repeat(200)) });
+    expect((await save("   ")).status).toBe(200);
+    expect(await load()).toMatchObject({ body, attachments: refs(null) });
+    expect((await save("<script>alert('caption')</script>")).status).toBe(200);
+    expect((await save(null)).status).toBe(200);
+    expect(await load()).toMatchObject({ body, attachments: refs(null) });
+    expect((await request("/entries", owner, "POST", { date: "2026-10-11", title: "Legacy", body })).status).toBe(201);
+    expect((await request("/entries/2026-10-11", owner, "PUT", { title: "Legacy edited", body })).status).toBe(200);
+  });
   it("discards drafts safely and cleans expired uploads and ownerless files", async () => {
     const id = await reserve();
     expect((await request(`/attachments/${id}`, owner, "DELETE")).status).toBe(204);

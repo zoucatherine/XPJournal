@@ -45,7 +45,7 @@ import { AuthScreen } from "./AuthScreen";
 import { BodyEditor } from "./BodyEditor";
 import { ImagePreviewWindow } from "./ImagePreviewWindow";
 import { compressImage, formatKB, MAX_IMAGES } from "./imageCompress";
-import { docFromEntry, docBody, docRefs, insertAt, removeAt, replaceAt, wordCount, type AttItem, type Caret, type Doc } from "./bodyModel";
+import { docFromEntry, docBody, docRefs, insertAt, removeAt, replaceAt, captionAt, wordCount, type AttItem, type Caret, type Doc } from "./bodyModel";
 
 const queryClient = new QueryClient();
 
@@ -2101,6 +2101,7 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
                   doc={doc}
                   disabled={busy}
                   caretRef={caretRef}
+                  onCaption={(i, v) => setDoc(d => captionAt(d, i, v))}
                   onText={(i, v) => {
                     if (upload?.phase === "error") setUpload(null);
                     setDoc(d => ({ ...d, texts: d.texts.map((t, k) => (k === i ? v : t)) }));
