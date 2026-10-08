@@ -15,6 +15,77 @@ tags:
   - name: pin
     description: PIN lock operations
 paths:
+  /attachments/uploads:
+    post:
+      operationId: requestAttachmentUpload
+      tags: [entries]
+      summary: Reserve a private image upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachmentUploadInput"
+      responses:
+        "201":
+          description: Upload reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttachmentUpload"
+        "400":
+          description: Invalid image metadata
+        "413":
+          description: Image or account limit exceeded
+        "503":
+          description: Private image storage unavailable
+  /attachments/{id}/finalize:
+    post:
+      operationId: finalizeAttachment
+      tags: [entries]
+      summary: Validate uploaded image bytes before attaching
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Verified private image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attachment"
+        "400":
+          description: Invalid image content
+        "404":
+          description: Upload not found
+  /attachments/{id}:
+    delete:
+      operationId: discardAttachment
+      tags: [entries]
+      summary: Discard an upload not referenced by a saved entry
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204":
+          description: Upload discarded
+        "409":
+          description: Image still belongs to a saved entry
+        "404":
+          description: Upload not found
+  /attachments/{id}/image:
+    get:
+      operationId: getAttachmentImage
+      tags: [entries]
+      summary: Read a private verified image
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Image bytes (authenticated, no public URL)
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        "404":
+          description: Image not found
   /healthz:
     get:
       operationId: healthCheck
@@ -281,6 +352,10 @@ components:
           type: string
         body:
           type: string
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntryAttachment"
         mood:
           type: string
           nullable: true
@@ -305,6 +380,11 @@ components:
           type: string
         body:
           type: string
+        attachments:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/AttachmentReference"
         mood:
           type: string
           nullable: true
@@ -320,6 +400,12 @@ components:
           type: string
         body:
           type: string
+        attachments:
+          type: array
+          maxItems: 10
+          description: Required when editing an entry that already contains attachments; omission is rejected to protect older clients.
+          items:
+            $ref: "#/components/schemas/AttachmentReference"
         mood:
           type: string
           nullable: true
@@ -334,6 +420,43 @@ components:
           type: string
       required:
         - error
+    AttachmentReference:
+      type: object
+      required: [id, offset]
+      properties:
+        id: { type: string, format: uuid }
+        offset: { type: integer, minimum: 0, description: UTF-16 offset in plain-text body }
+    Attachment:
+      type: object
+      required: [id, name, size, contentType]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        size: { type: integer }
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+    EntryAttachment:
+      type: object
+      required: [id, offset, name, size, contentType]
+      properties:
+        id: { type: string, format: uuid }
+        offset: { type: integer, minimum: 0 }
+        name: { type: string }
+        size: { type: integer }
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+    AttachmentUploadInput:
+      type: object
+      required: [date, name, size, contentType]
+      properties:
+        date: { type: string, pattern: '^\d{4}-\d{2}-\d{2}$' }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        size: { type: integer, minimum: 1, maximum: 1048576 }
+        contentType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+    AttachmentUpload:
+      type: object
+      required: [id, uploadURL]
+      properties:
+        id: { type: string, format: uuid }
+        uploadURL: { type: string }
     PinStatus:
       type: object
       properties:

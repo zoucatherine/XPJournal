@@ -70,6 +70,27 @@ export async function runMigrations(): Promise<void> {
     await client.query(`ALTER TABLE sticky_notes ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE`);
     await client.query(`ALTER TABLE settings ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE`);
 
+    await client.query(`ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS attachment_refs JSONB NOT NULL DEFAULT '[]'::jsonb`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS journal_attachments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        date TEXT NOT NULL,
+        name TEXT NOT NULL,
+        size INTEGER NOT NULL CHECK (size > 0 AND size <= 1048576),
+        content_type TEXT NOT NULL,
+        object_path TEXT NOT NULL UNIQUE,
+        upload_path TEXT NOT NULL UNIQUE,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        upload_expires_at TIMESTAMPTZ NOT NULL,
+        expires_at TIMESTAMPTZ,
+        deleted_at TIMESTAMPTZ
+      )
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS journal_attachments_owner_date ON journal_attachments(user_id, date)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS journal_attachments_cleanup ON journal_attachments(expires_at, deleted_at)`);
+
     logger.info("Migrations applied");
   } catch (err) {
     logger.error({ err }, "Migration failed");

@@ -43,7 +43,7 @@ function PinInput({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  inputRef?: React.RefObject<HTMLInputElement>;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }) {
   return (
     <div style={{ marginBottom: 10 }}>

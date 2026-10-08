@@ -23,6 +23,9 @@ import {
   getListEntriesQueryKey,
   getGetEntryQueryKey,
   ApiError,
+  useRequestAttachmentUpload,
+  useFinalizeAttachment,
+  useDiscardAttachment,
   useListNotes,
   useCreateNote,
   useUpdateNote,
@@ -39,6 +42,10 @@ import { PinSettingsDialog } from "./PinSettingsDialog";
 import { AccountSettingsDialog } from "./AccountSettingsDialog";
 import { useAuth } from "./useAuth";
 import { AuthScreen } from "./AuthScreen";
+import { BodyEditor } from "./BodyEditor";
+import { ImagePreviewWindow } from "./ImagePreviewWindow";
+import { compressImage, formatKB, MAX_IMAGES } from "./imageCompress";
+import { docFromEntry, docBody, docRefs, insertAt, removeAt, replaceAt, wordCount, type AttItem, type Caret, type Doc } from "./bodyModel";
 
 const queryClient = new QueryClient();
 
@@ -1763,6 +1770,12 @@ function Desktop({
   );
 }
 
+type UploadState =
+  | { phase: "busy"; label: string }
+  | { phase: "error"; message: string; file: File; target: UploadTarget }
+  | null;
+type UploadTarget = { kind: "insert"; caret: Caret } | { kind: "replace"; index: number };
+
 function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   const dateStr = format(date, "yyyy-MM-dd");
   const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggableFixed();
@@ -1781,79 +1794,200 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   const createEntry = useCreateEntry();
   const updateEntry = useUpdateEntry();
   const deleteEntry = useDeleteEntry();
+  const requestUpload = useRequestAttachmentUpload();
+  const finalizeUpload = useFinalizeAttachment();
+  const discardUpload = useDiscardAttachment();
+  const discardRef = useRef(discardUpload.mutateAsync);
+  discardRef.current = discardUpload.mutateAsync;
 
   const MOODS = ["😊", "😄", "😍", "😎", "🥳", "😌", "😐", "😔", "😢", "😠", "😴", "🤒", "🎉", "💪", "🙏"];
 
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [doc, setDoc] = useState<Doc>({ texts: [""], imgs: [] });
   const [mood, setMood] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [upload, setUpload] = useState<UploadState>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const initRef = useRef<string | null>(null);
+  const caretRef = useRef<Caret>({ seg: 0, pos: 0 });
+  const fileRef = useRef<HTMLInputElement>(null);
+  const pickTarget = useRef<UploadTarget | null>(null);
+  const pendingIds = useRef<Set<string>>(new Set());
+  const existsRef = useRef(false);
+  const savedSnap = useRef<string>("");
+  const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const snapOf = (t: string, d: Doc, m: string | null) =>
+    JSON.stringify({ t, b: docBody(d), r: docRefs(d), m });
 
   useEffect(() => {
-    if (entry && initRef.current !== dateStr) {
+    if (initRef.current === dateStr) return;
+    if (entry) {
+      const d = docFromEntry(entry.body, entry.attachments);
       setTitle(entry.title);
-      setBody(entry.body);
+      setDoc(d);
       setMood(entry.mood ?? null);
+      existsRef.current = true;
+      savedSnap.current = snapOf(entry.title, d, entry.mood ?? null);
       initRef.current = dateStr;
-    } else if (!entry && !isLoading && initRef.current !== dateStr) {
-      setTitle("");
-      setBody("");
-      setMood(null);
+    } else if (!isLoading) {
+      setTitle(""); setDoc({ texts: [""], imgs: [] }); setMood(null);
+      savedSnap.current = snapOf("", { texts: [""], imgs: [] }, null);
       initRef.current = dateStr;
     }
   }, [entry, isLoading, dateStr]);
 
-  const handleSave = () => {
+  useEffect(() => () => {
+    if (statusTimer.current) clearTimeout(statusTimer.current);
+  }, []);
+
+  const discardPending = useCallback(() => {
+    pendingIds.current.forEach(id => { discardRef.current({ id }).catch(() => {}); });
+    pendingIds.current = new Set();
+  }, []);
+
+  const dirty = initRef.current === dateStr && snapOf(title, doc, mood) !== savedSnap.current;
+  const busy = saving || upload?.phase === "busy" || deleteEntry.isPending;
+  const body = docBody(doc);
+
+  const requestClose = () => {
+    if (busy) return;
+    if (dirty && !window.confirm("You have unsaved changes. Close without saving?")) return;
+    discardPending();
+    onClose();
+  };
+
+  const runUpload = async (file: File, target: UploadTarget) => {
+    setUpload({ phase: "busy", label: "Preparing image..." });
+    let reservedId: string | null = null;
+    try {
+      const c = await compressImage(file);
+      setUpload({ phase: "busy", label: `Uploading ${formatKB(c.blob.size)}...` });
+      const reserved = await requestUpload.mutateAsync({
+        data: { date: dateStr, name: c.name, size: c.blob.size, contentType: c.contentType },
+      });
+      reservedId = reserved.id;
+      const put = await fetch(reserved.uploadURL, {
+        method: "PUT",
+        headers: { "Content-Type": c.contentType },
+        body: c.blob,
+      });
+      if (!put.ok) throw new Error("The upload was refused by storage.");
+      const fin = await finalizeUpload.mutateAsync({ id: reserved.id });
+      pendingIds.current.add(fin.id);
+      reservedId = null;
+      const item: AttItem = { id: fin.id, name: fin.name, size: fin.size, contentType: fin.contentType };
+      if (target.kind === "replace") {
+        const old = doc.imgs[target.index];
+        if (old && pendingIds.current.has(old.id)) {
+          pendingIds.current.delete(old.id);
+          discardRef.current({ id: old.id }).catch(() => {});
+        }
+      } else {
+        caretRef.current = { seg: Math.min(target.caret.seg, doc.texts.length - 1) + 1, pos: 0 };
+      }
+      setDoc(d => {
+        if (target.kind === "replace") {
+          const old = d.imgs[target.index];
+          return old ? replaceAt(d, target.index, item) : d;
+        }
+        return insertAt(d, target.caret, item);
+      });
+      setUpload(null);
+    } catch (err) {
+      if (reservedId) discardRef.current({ id: reservedId }).catch(() => {});
+      const message = err instanceof Error && err.message ? err.message : "The image could not be uploaded.";
+      setUpload({ phase: "error", message, file, target });
+    }
+  };
+
+  const pick = (target: UploadTarget) => {
+    if (busy) return;
+    if (target.kind === "insert" && doc.imgs.length >= MAX_IMAGES) {
+      setUpload({ phase: "error", message: `An entry can hold up to ${MAX_IMAGES} images.`, file: new File([], "x"), target });
+      return;
+    }
+    pickTarget.current = target;
+    fileRef.current?.click();
+  };
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    const t = pickTarget.current;
+    if (f && t) void runUpload(f, t);
+  };
+
+  const removeImage = (i: number) => {
+    if (busy) return;
+    setUpload(null);
+    const caret = caretRef.current;
+    if (caret.seg === i + 1) caretRef.current = { seg: i, pos: doc.texts[i].length + caret.pos };
+    else if (caret.seg > i + 1) caretRef.current = { ...caret, seg: caret.seg - 1 };
+    const id = doc.imgs[i]?.id;
+    if (id && pendingIds.current.has(id)) {
+      pendingIds.current.delete(id);
+      discardRef.current({ id }).catch(() => {});
+    }
+    setDoc(d => removeAt(d, i));
+    setPreviewId(p => (p === id ? null : p));
+  };
+
+  const handleSave = async () => {
+    if (busy || initRef.current !== dateStr) return;
+    setSaving(true);
+    setSaveError(null);
     setSaveStatus("Saving...");
-    if (entry) {
-      updateEntry.mutate(
-        { date: dateStr, data: { title, body, mood } },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
-            queryClient.invalidateQueries({ queryKey: getGetEntryQueryKey(dateStr) });
-            setSaveStatus("Saved!");
-            setTimeout(() => setSaveStatus(null), 2000);
-          }
-        }
-      );
-    } else {
-      createEntry.mutate(
-        { data: { date: dateStr, title, body, mood } },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
-            queryClient.invalidateQueries({ queryKey: getGetEntryQueryKey(dateStr) });
-            setSaveStatus("Saved!");
-            setTimeout(() => setSaveStatus(null), 2000);
-          }
-        }
-      );
+    const sent = { title, doc, mood };
+    const attachments = docRefs(doc);
+    try {
+      const saved = existsRef.current
+        ? await updateEntry.mutateAsync({ date: dateStr, data: { title, body, mood, attachments } })
+        : await createEntry.mutateAsync({ data: { date: dateStr, title, body, mood, attachments } });
+      existsRef.current = true;
+      savedSnap.current = snapOf(sent.title, sent.doc, sent.mood);
+      pendingIds.current = new Set();
+      queryClient.setQueryData(getGetEntryQueryKey(dateStr), saved);
+      queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
+      setSaveStatus("Saved!");
+      if (statusTimer.current) clearTimeout(statusTimer.current);
+      statusTimer.current = setTimeout(() => setSaveStatus(null), 2000);
+    } catch (err) {
+      setSaveStatus(null);
+      const detail = err instanceof ApiError && err.message ? ` (${err.message})` : "";
+      setSaveError(`Your entry could not be saved${detail}. Your draft is still here. Press Save to try again.`);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = () => {
-    if (!entry) return;
+    if (busy || !existsRef.current) return;
     if (window.confirm("Delete this entry?")) {
       deleteEntry.mutate(
         { date: dateStr },
         {
           onSuccess: () => {
+            discardPending();
             queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey() });
             queryClient.invalidateQueries({ queryKey: getGetEntryQueryKey(dateStr) });
             onClose();
-          }
+          },
+          onError: () => setSaveError("The entry could not be deleted. Please try again."),
         }
       );
     }
   };
 
+  const previewIndex = previewId ? doc.imgs.findIndex(a => a.id === previewId) : -1;
+
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/20" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/20" onClick={requestClose} />
 
       {/* Window */}
       <div
@@ -1879,7 +2013,7 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
           <div className="xp-titlebar-controls">
             <div className="xp-btn-control xp-btn-min" />
             <div className="xp-btn-control xp-btn-max" />
-            <div className="xp-btn-control xp-btn-close" onClick={onClose} />
+            <button type="button" className="xp-btn-control xp-btn-close" aria-label="Close entry" onClick={requestClose} disabled={busy} />
           </div>
         </div>
 
@@ -1887,12 +2021,13 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
           {isLoading ? (
             <div className="p-8 text-center text-sm font-sans">Loading...</div>
           ) : (
-            <div className="flex flex-col gap-4 h-[490px]">
+            <div className="flex flex-col gap-3 h-[520px] max-h-[calc(100dvh-80px)]">
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-sans" style={{ color: "var(--xp-window-text)" }}>Title:</label>
                 <input
                   type="text"
                   value={title}
+                  disabled={saving}
                   onChange={(e) => setTitle(e.target.value)}
                   className="xp-inset xp-input w-full"
                   placeholder="Untitled Entry"
@@ -1932,12 +2067,47 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
               </div>
 
               <div className="flex flex-col gap-1 flex-1 min-h-0">
-                <label className="text-sm font-sans" style={{ color: "var(--xp-window-text)" }}>Entry:</label>
-                <textarea
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  className="xp-inset xp-textarea w-full flex-1"
-                  placeholder="Dear diary..."
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-sans" style={{ color: "var(--xp-window-text)" }}>Entry:</label>
+                  <button
+                    type="button"
+                    className="xp-button"
+                    style={{ padding: "1px 8px", fontSize: 12 }}
+                    disabled={busy}
+                    onClick={() => pick({ kind: "insert", caret: { ...caretRef.current } })}
+                    data-testid="button-add-image"
+                  >
+                    Add image at cursor
+                  </button>
+                </div>
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={onFile} data-testid="input-image-file" />
+                {upload && (
+                  <div
+                    role={upload.phase === "error" ? "alert" : "status"}
+                    style={{ fontFamily: "Tahoma, sans-serif", fontSize: 12, padding: "3px 6px", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", background: "var(--xp-calendar-today-bg)", border: "1px solid var(--xp-accent)", color: "var(--xp-calendar-text)" }}
+                  >
+                    <span style={{ flex: 1 }}>{upload.phase === "busy" ? upload.label : upload.message}</span>
+                    {upload.phase === "error" && (
+                      <>
+                        {upload.file.size > 0 && (
+                          <button type="button" className="xp-button" style={{ padding: "1px 8px", fontSize: 12 }} onClick={() => void runUpload(upload.file, upload.target)} data-testid="button-retry-upload">Retry</button>
+                        )}
+                        <button type="button" className="xp-button" style={{ padding: "1px 8px", fontSize: 12 }} onClick={() => setUpload(null)}>Dismiss</button>
+                      </>
+                    )}
+                  </div>
+                )}
+                <BodyEditor
+                  doc={doc}
+                  disabled={busy}
+                  caretRef={caretRef}
+                  onText={(i, v) => {
+                    if (upload?.phase === "error") setUpload(null);
+                    setDoc(d => ({ ...d, texts: d.texts.map((t, k) => (k === i ? v : t)) }));
+                  }}
+                  onPreview={setPreviewId}
+                  onReplace={(i) => pick({ kind: "replace", index: i })}
+                  onRemove={removeImage}
                 />
                 <div
                   style={{
@@ -1954,23 +2124,30 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
                     userSelect: "none",
                   }}
                 >
-                  {body.trim() === "" ? 0 : body.trim().split(/\s+/).length} words
+                  {doc.imgs.length > 0 && <span style={{ marginRight: 10 }}>{doc.imgs.length} image{doc.imgs.length === 1 ? "" : "s"}</span>}
+                  {wordCount(body)} words
                 </div>
               </div>
 
+              {saveError && (
+                <div role="alert" data-testid="text-save-error" style={{ fontFamily: "Tahoma, sans-serif", fontSize: 12, padding: "3px 6px", border: "1px solid var(--xp-accent-dark)", background: "var(--xp-calendar-today-bg)", color: "var(--xp-calendar-text)" }}>
+                  {saveError}
+                </div>
+              )}
+
               <div
-                className="flex justify-between items-center mt-2 pt-3"
+                className="flex justify-between items-center pt-3"
                 style={{
                   borderTop: `1px solid var(--xp-separator)`,
                   boxShadow: `0 -1px 0 0 var(--xp-separator-light)`,
                 }}
               >
                 <div className="flex gap-2">
-                  <button className="xp-button font-bold min-w-[80px]" onClick={handleSave}>
-                    Save
+                  <button className="xp-button font-bold min-w-[80px]" onClick={() => void handleSave()} disabled={busy}>
+                    {saving ? "Saving..." : saveError ? "Retry Save" : "Save"}
                   </button>
                   {entry && (
-                    <button className="xp-button min-w-[80px]" onClick={handleDelete}>
+                    <button className="xp-button min-w-[80px]" onClick={handleDelete} disabled={busy}>
                       Delete
                     </button>
                   )}
@@ -1979,7 +2156,7 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
                   {saveStatus && (
                     <span style={{ color: "var(--xp-text-accent)" }}>{saveStatus}</span>
                   )}
-                  <button className="xp-button min-w-[80px]" onClick={onClose}>
+                  <button className="xp-button min-w-[80px]" onClick={requestClose} disabled={busy}>
                     Close
                   </button>
                 </div>
@@ -1988,6 +2165,14 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
           )}
         </div>
       </div>
+      {previewIndex >= 0 && (
+        <ImagePreviewWindow
+          items={doc.imgs}
+          index={previewIndex}
+          onIndex={(i) => setPreviewId(doc.imgs[i].id)}
+          onClose={() => setPreviewId(null)}
+        />
+      )}
     </>
   );
 }

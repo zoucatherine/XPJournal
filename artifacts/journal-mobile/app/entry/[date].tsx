@@ -61,6 +61,16 @@ export default function EntryScreen() {
 });
 
   const isNew = !isLoading && !entry;
+  const hasAttachments = (entry?.attachments?.length ?? 0) > 0;
+  const readableBody = hasAttachments
+    ? [...(entry?.attachments ?? [])].sort((a, b) => a.offset - b.offset).reduce(
+        (state, image) => ({
+          text: state.text + body.slice(state.offset, image.offset) + `\n[Image: ${image.name} — open in web journal]\n`,
+          offset: image.offset,
+        }), { text: "", offset: 0 },
+      )
+    : null;
+  const displayedBody = readableBody ? readableBody.text + body.slice(readableBody.offset) : body;
 
   useEffect(() => {
     if (!initialized.current && !isLoading) {
@@ -104,6 +114,10 @@ export default function EntryScreen() {
 
   function handleSave() {
     if (!date) return;
+    if (hasAttachments) {
+      Alert.alert("Edit in web journal", "This entry contains images. Open the web journal to edit it without changing attachment positions.");
+      return;
+    }
     if (!title.trim()) {
       Alert.alert("Title required", "Please enter a title for your journal entry.");
       return;
@@ -193,12 +207,18 @@ export default function EntryScreen() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.formContent}
           >
+            {hasAttachments && (
+              <Text accessibilityRole="text" style={[styles.errorText, { color: colors.mutedForeground }]}>
+                This entry includes images and is read-only here. Open the web journal to view its images or edit it safely.
+              </Text>
+            )}
             <View style={styles.fieldGroup}>
               <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Title:</Text>
               <TextInput
                 testID="title-input"
                 style={[styles.titleInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.input }]}
                 value={title}
+                editable={!hasAttachments}
                 onChangeText={(t) => { setTitle(t); setIsDirty(true); }}
                 placeholder="Entry title..."
                 placeholderTextColor={colors.mutedForeground}
@@ -222,7 +242,8 @@ export default function EntryScreen() {
                     borderLeftColor: colors.border,
                   },
                 ]}
-                value={body}
+                value={displayedBody}
+                editable={!hasAttachments}
                 onChangeText={(t) => { setBody(t); setIsDirty(true); }}
                 placeholder="Write your thoughts..."
                 placeholderTextColor={colors.mutedForeground}
@@ -261,12 +282,12 @@ export default function EntryScreen() {
         <Pressable
           testID="save-btn"
           onPress={handleSave}
-          disabled={isSaving || isLoading}
+          disabled={isSaving || isLoading || hasAttachments}
           style={({ pressed }) => [
             styles.xpBtn,
             styles.xpBtnPrimary,
             pressed && styles.xpBtnPressed,
-            (isSaving || isLoading) && styles.xpBtnDisabled,
+            (isSaving || isLoading || hasAttachments) && styles.xpBtnDisabled,
           ]}
         >
           {isSaving ? (
