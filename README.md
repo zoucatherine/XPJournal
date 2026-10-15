@@ -108,3 +108,6 @@ pnpm run build       # typecheck + build all packages
 | Variable | Description |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
+
+## Credits
+MSN Live Messenger Emotions Compilation: [Original Repo](https://github.com/bernzrdo/msn-emoticons)
