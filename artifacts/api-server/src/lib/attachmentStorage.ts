@@ -32,6 +32,11 @@ export function attachmentPaths(id: string) {
   return { uploadPath: `${dir}/journal-uploads/${id}`, objectPath: `${dir}/journal-images/${id}` };
 }
 
+export function stickerPaths(id: string) {
+  const { dir } = storage();
+  return { uploadPath: `${dir}/sticker-uploads/${id}`, objectPath: `${dir}/desktop-stickers/${id}` };
+}
+
 export async function signAttachmentUpload(path: string, contentType: string) {
   if (storage().external) {
     const [url] = await file(path).getSignedUrl({

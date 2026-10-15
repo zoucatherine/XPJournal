@@ -6,6 +6,6 @@
 - [Don't infer one-time migration state from row counts](one-time-migration-durable-marker.md) — "is this table empty?" as a proxy for "has this migration run?" breaks permanently once rows can be deleted; use an explicit durable marker instead.
 - [api-server DB integration tests use an isolated schema](api-server-db-integration-tests.md) — repoint DATABASE_URL's search_path to a throwaway schema before import so tests hit the real DB without touching real data.
 - [Vercel deployments cannot reach Replit's managed Postgres](vercel-external-db-required.md) — external deploy targets need their own externally-reachable DB + secrets; runtime migrations should be self-sufficient for fresh DBs.
-- [Orval Zod catalog detection](orval-zod-catalog-version.md) — automatic validator version detection can target the wrong Zod major when pnpm catalog references are used.
+- [Orval validator pitfalls](orval-zod-catalog-version.md) — catalog references can confuse Zod major detection; OpenAPI integers may still need explicit integer checks.
 - [Journal attachment compatibility](journal-attachment-compatibility.md) — native editing of image-containing entries stays blocked until it can preserve both writing and image positions.
 - [Journal emoticon style](journal-emoticon-style.md) — use classic Messenger-style pixel emoticons for journal moods, not platform emoji artwork.

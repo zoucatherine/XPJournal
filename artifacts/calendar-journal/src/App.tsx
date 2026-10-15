@@ -45,6 +45,8 @@ import { useAuth } from "./useAuth";
 import { AuthScreen } from "./AuthScreen";
 import { BodyEditor } from "./BodyEditor";
 import { ImagePreviewWindow } from "./ImagePreviewWindow";
+import { useStickers } from "./useStickers";
+import { DesktopStickers, StickerUploadStatus } from "./DesktopStickers";
 import { compressImage, formatKB, MAX_IMAGES } from "./imageCompress";
 import { docFromEntry, docBody, docRefs, insertAt, removeAt, replaceAt, captionAt, wordCount, type AttItem, type Caret, type Doc } from "./bodyModel";
 
@@ -368,6 +370,12 @@ function MenuRow({
   );
 }
 
+const KEYROW: React.CSSProperties = {
+  display: "block", width: "100%", textAlign: "left", padding: "7px 14px 7px 42px", cursor: "pointer",
+  borderBottom: "1px solid var(--xp-separator)", background: "transparent", color: "var(--xp-window-text)",
+  fontSize: 12, fontFamily: "Tahoma, sans-serif", border: "none",
+};
+
 function StartMenu({
   onClose,
   onOpenSearch,
@@ -375,8 +383,12 @@ function StartMenu({
   onOpenLockSettings,
   onOpenAccountSettings,
   onLogout,
+  onAddSticker,
+  onManageStickers,
 }: {
   onClose: () => void;
+  onAddSticker: () => void;
+  onManageStickers: () => void;
   onOpenSearch: () => void;
   onNewNote: () => void;
   onOpenLockSettings: () => void;
@@ -480,6 +492,8 @@ function StartMenu({
 
       <MenuRow icon="🔍" label="Search Entries" onClick={() => { onOpenSearch(); onClose(); }} />
       <MenuRow icon="📌" label="New Sticky Note" onClick={() => { onNewNote(); onClose(); }} />
+      <button type="button" role="menuitem" data-testid="menu-add-sticker" onClick={() => { onAddSticker(); onClose(); }} className="xp-menu-key" style={KEYROW}>Add sticker...</button>
+      <button type="button" role="menuitem" data-testid="menu-manage-stickers" onClick={() => { onManageStickers(); onClose(); }} className="xp-menu-key" style={KEYROW}>Manage stickers</button>
       <MenuRow icon="🔑" label="Lock Settings" onClick={() => { onOpenLockSettings(); onClose(); }} />
       <MenuRow icon="👤" label="Account Settings" onClick={() => { onOpenAccountSettings(); onClose(); }} />
       <MenuRow icon="🚪" label="Log Out" onClick={() => { onLogout(); onClose(); }} />
@@ -1389,11 +1403,13 @@ function StickyNote({
 }
 
 function Desktop({
+  accountKey,
   lock,
   onOpenLockSettings,
   onOpenAccountSettings,
   onLogout,
 }: {
+  accountKey: string;
   lock: () => void;
   onOpenLockSettings: () => void;
   onOpenAccountSettings: () => void;
@@ -1420,7 +1436,11 @@ function Desktop({
     removeNote,
   } = useStickyNotes();
 
-  const { windowRef, windowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
+  const stickerCtl = useStickers(accountKey);
+  const [showStickers, setShowStickers] = useState(false);
+  const stickerInput = useRef<HTMLInputElement>(null);
+  const { windowRef, windowStyle: baseWindowStyle, onTitlebarMouseDown } = useDraggable("journal-main-window-pos");
+  const windowStyle: React.CSSProperties = { ...baseWindowStyle, zIndex: 5 };
   const { getDesktopStyle } = useWallpaper();
 
   useEffect(() => {
@@ -1463,6 +1483,10 @@ function Desktop({
 
   return (
     <div className="min-h-screen w-full relative pb-[30px] overflow-hidden" style={desktopStyle as React.CSSProperties}>
+      <DesktopStickers ctl={stickerCtl} managerOpen={showStickers} onCloseManager={() => setShowStickers(false)} />
+      <StickerUploadStatus ctl={stickerCtl} />
+      <input ref={stickerInput} type="file" accept="image/png,.png" style={{ display: "none" }} data-testid="input-sticker-file"
+        onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void stickerCtl.addFile(f); }} />
       {/* Main Calendar Window */}
       <div
         ref={windowRef}
@@ -1724,6 +1748,8 @@ function Desktop({
           onClose={() => setShowStartMenu(false)}
           onOpenSearch={() => { setShowSearch(true); setShowStartMenu(false); }}
           onNewNote={() => { addNote(); setShowStartMenu(false); }}
+          onAddSticker={() => stickerInput.current?.click()}
+          onManageStickers={() => setShowStickers(true)}
           onOpenLockSettings={() => { onOpenLockSettings(); setShowStartMenu(false); }}
           onOpenAccountSettings={() => { onOpenAccountSettings(); setShowStartMenu(false); }}
           onLogout={() => { setShowStartMenu(false); onLogout(); }}
@@ -2242,6 +2268,7 @@ function AppInner({
             <Route path="/">
               {() => (
                 <Desktop
+                  accountKey={username ?? ""}
                   lock={lock}
                   onOpenLockSettings={() => setShowPinSettings(true)}
                   onOpenAccountSettings={() => setShowAccountSettings(true)}

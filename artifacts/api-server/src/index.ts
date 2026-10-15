@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { logger } from "./lib/logger.js";
 import { runMigrations } from "./migrate.js";
+import { maybeCleanupStickers } from "./lib/desktopStickers.js";
 
 const migrationPromise = runMigrations().catch((err) => {
   logger.error({ err }, "Failed to run migrations");
@@ -23,6 +24,10 @@ if (process.env.VERCEL !== "1") {
   }
 
   migrationPromise.then(() => {
+    // Long-lived servers also clean abandoned uploads when nobody is browsing.
+    // Serverless hosts use the same sweep on incoming authenticated requests.
+    void maybeCleanupStickers();
+    setInterval(() => { void maybeCleanupStickers(); }, 60_000).unref();
     const server = app.listen(port, () => {
       logger.info({ port }, "Server listening");
     });

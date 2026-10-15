@@ -15,6 +15,106 @@ tags:
   - name: pin
     description: PIN lock operations
 paths:
+  /stickers:
+    get:
+      operationId: listStickers
+      tags: [stickers]
+      summary: List the signed-in user's desktop stickers
+      responses:
+        "200":
+          description: Ready desktop stickers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/DesktopSticker" }
+  /stickers/uploads:
+    post:
+      operationId: requestStickerUpload
+      tags: [stickers]
+      summary: Reserve a private PNG sticker upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StickerUploadInput" }
+      responses:
+        "201":
+          description: Private upload reservation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttachmentUpload" }
+        "400":
+          description: Invalid PNG metadata
+        "413":
+          description: Account sticker limit reached
+        "503":
+          description: Private image storage unavailable
+  /stickers/{id}/finalize:
+    post:
+      operationId: finalizeSticker
+      tags: [stickers]
+      summary: Verify a PNG upload and place it on the desktop
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Verified desktop sticker
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesktopSticker" }
+        "400":
+          description: Invalid PNG
+        "404":
+          description: Upload missing or expired
+  /stickers/{id}:
+    patch:
+      operationId: updateSticker
+      tags: [stickers]
+      summary: Save sticker position and proportional size
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StickerLayoutInput" }
+      responses:
+        "200":
+          description: Saved desktop sticker
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DesktopSticker" }
+        "400":
+          description: Invalid layout
+        "404":
+          description: Sticker not found
+    delete:
+      operationId: deleteSticker
+      tags: [stickers]
+      summary: Remove a sticker or abandon its upload
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204":
+          description: Sticker removed and private files queued for cleanup
+        "404":
+          description: Sticker not found
+  /stickers/{id}/image:
+    get:
+      operationId: getStickerImage
+      tags: [stickers]
+      summary: Read an owned, verified PNG sticker
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Private PNG image
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+        "404":
+          description: Sticker not found
   /attachments/uploads:
     post:
       operationId: requestAttachmentUpload
@@ -335,6 +435,33 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
+    StickerUploadInput:
+      type: object
+      additionalProperties: false
+      required: [name, size]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        size: { type: integer, minimum: 1, maximum: 1048576 }
+    StickerLayoutInput:
+      type: object
+      additionalProperties: false
+      required: [posX, posY, displaySize]
+      properties:
+        posX: { type: integer, minimum: 0, maximum: 100000 }
+        posY: { type: integer, minimum: 0, maximum: 100000 }
+        displaySize: { type: integer, minimum: 24, maximum: 512, description: Longest displayed edge in pixels }
+    DesktopSticker:
+      type: object
+      required: [id, name, size, imageWidth, imageHeight, posX, posY, displaySize]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        size: { type: integer, description: Stored PNG bytes }
+        imageWidth: { type: integer, minimum: 1, maximum: 1024 }
+        imageHeight: { type: integer, minimum: 1, maximum: 1024 }
+        posX: { type: integer }
+        posY: { type: integer }
+        displaySize: { type: integer, minimum: 24, maximum: 512 }
     HealthStatus:
       type: object
       properties:

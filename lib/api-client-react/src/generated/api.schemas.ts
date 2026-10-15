@@ -5,6 +5,62 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface StickerUploadInput {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  /**
+     * @minimum 1
+     * @maximum 1048576
+     */
+  size: number;
+}
+
+export interface StickerLayoutInput {
+  /**
+     * @minimum 0
+     * @maximum 100000
+     */
+  posX: number;
+  /**
+     * @minimum 0
+     * @maximum 100000
+     */
+  posY: number;
+  /**
+     * Longest displayed edge in pixels
+     * @minimum 24
+     * @maximum 512
+     */
+  displaySize: number;
+}
+
+export interface DesktopSticker {
+  id: string;
+  name: string;
+  /** Stored PNG bytes */
+  size: number;
+  /**
+     * @minimum 1
+     * @maximum 1024
+     */
+  imageWidth: number;
+  /**
+     * @minimum 1
+     * @maximum 1024
+     */
+  imageHeight: number;
+  posX: number;
+  posY: number;
+  /**
+     * @minimum 24
+     * @maximum 512
+     */
+  displaySize: number;
+}
+
 export interface HealthStatus {
   status: string;
 }

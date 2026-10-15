@@ -89,6 +89,30 @@ export async function runMigrations(): Promise<void> {
       )
     `);
     await client.query(`ALTER TABLE journal_attachments ADD COLUMN IF NOT EXISTS caption TEXT CHECK (char_length(caption) <= 200)`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS desktop_stickers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        name TEXT NOT NULL,
+        size INTEGER NOT NULL CHECK (size > 0 AND size <= 1048576),
+        upload_size INTEGER NOT NULL CHECK (upload_size > 0 AND upload_size <= 1048576),
+        image_width INTEGER CHECK (image_width BETWEEN 1 AND 1024),
+        image_height INTEGER CHECK (image_height BETWEEN 1 AND 1024),
+        pos_x INTEGER NOT NULL DEFAULT 16 CHECK (pos_x BETWEEN 0 AND 100000),
+        pos_y INTEGER NOT NULL DEFAULT 16 CHECK (pos_y BETWEEN 0 AND 100000),
+        display_size INTEGER NOT NULL DEFAULT 160 CHECK (display_size BETWEEN 24 AND 512),
+        object_path TEXT NOT NULL UNIQUE,
+        upload_path TEXT NOT NULL UNIQUE,
+        upload_cleaned BOOLEAN NOT NULL DEFAULT FALSE,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','ready')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        upload_expires_at TIMESTAMPTZ NOT NULL,
+        expires_at TIMESTAMPTZ,
+        deleted_at TIMESTAMPTZ
+      )
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS desktop_stickers_owner ON desktop_stickers(user_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS desktop_stickers_cleanup ON desktop_stickers(upload_expires_at, expires_at, deleted_at)`);
     await client.query(`CREATE INDEX IF NOT EXISTS journal_attachments_owner_date ON journal_attachments(user_id, date)`);
     await client.query(`CREATE INDEX IF NOT EXISTS journal_attachments_cleanup ON journal_attachments(expires_at, deleted_at)`);
 

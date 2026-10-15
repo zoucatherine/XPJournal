@@ -24,6 +24,7 @@ import type {
   AttachmentUpload,
   AttachmentUploadInput,
   CreateJournalEntryInput,
+  DesktopSticker,
   ErrorResponse,
   HealthStatus,
   JournalEntry,
@@ -31,6 +32,8 @@ import type {
   PinResult,
   PinStatus,
   SearchEntriesParams,
+  StickerLayoutInput,
+  StickerUploadInput,
   UpdateJournalEntryInput
 } from './api.schemas';
 
@@ -60,6 +63,445 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getListStickersUrl = () => {
+
+
+
+
+  return `/api/stickers`
+}
+
+/**
+ * @summary List the signed-in user's desktop stickers
+ */
+export const listStickers = async ( options?: RequestInit): Promise<DesktopSticker[]> => {
+
+  return customFetch<DesktopSticker[]>(getListStickersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListStickersQueryKey = () => {
+    return [
+    `/api/stickers`
+    ] as const;
+    }
+
+
+export const getListStickersQueryOptions = <TData = Awaited<ReturnType<typeof listStickers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listStickers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListStickersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStickers>>> = ({ signal }) => listStickers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listStickers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListStickersQueryResult = NonNullable<Awaited<ReturnType<typeof listStickers>>>
+export type ListStickersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List the signed-in user's desktop stickers
+ */
+
+export function useListStickers<TData = Awaited<ReturnType<typeof listStickers>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listStickers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListStickersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRequestStickerUploadUrl = () => {
+
+
+
+
+  return `/api/stickers/uploads`
+}
+
+/**
+ * @summary Reserve a private PNG sticker upload
+ */
+export const requestStickerUpload = async (stickerUploadInput: StickerUploadInput, options?: RequestInit): Promise<AttachmentUpload> => {
+
+  return customFetch<AttachmentUpload>(getRequestStickerUploadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(stickerUploadInput)
+  }
+);}
+
+
+
+
+
+export const getRequestStickerUploadMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestStickerUpload>>, TError,{data: BodyType<StickerUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestStickerUpload>>, TError,{data: BodyType<StickerUploadInput>}, TContext> => {
+
+const mutationKey = ['requestStickerUpload'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestStickerUpload>>, {data: BodyType<StickerUploadInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestStickerUpload(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestStickerUploadMutationResult = NonNullable<Awaited<ReturnType<typeof requestStickerUpload>>>
+    export type RequestStickerUploadMutationBody = BodyType<StickerUploadInput>
+    export type RequestStickerUploadMutationError = ErrorType<void>
+
+    /**
+ * @summary Reserve a private PNG sticker upload
+ */
+export const useRequestStickerUpload = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestStickerUpload>>, TError,{data: BodyType<StickerUploadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestStickerUpload>>,
+        TError,
+        {data: BodyType<StickerUploadInput>},
+        TContext
+      > => {
+      return useMutation(getRequestStickerUploadMutationOptions(options));
+    }
+
+export const getFinalizeStickerUrl = (id: string,) => {
+
+
+
+
+  return `/api/stickers/${id}/finalize`
+}
+
+/**
+ * @summary Verify a PNG upload and place it on the desktop
+ */
+export const finalizeSticker = async (id: string, options?: RequestInit): Promise<DesktopSticker> => {
+
+  return customFetch<DesktopSticker>(getFinalizeStickerUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getFinalizeStickerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof finalizeSticker>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof finalizeSticker>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['finalizeSticker'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof finalizeSticker>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  finalizeSticker(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FinalizeStickerMutationResult = NonNullable<Awaited<ReturnType<typeof finalizeSticker>>>
+
+    export type FinalizeStickerMutationError = ErrorType<void>
+
+    /**
+ * @summary Verify a PNG upload and place it on the desktop
+ */
+export const useFinalizeSticker = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof finalizeSticker>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof finalizeSticker>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getFinalizeStickerMutationOptions(options));
+    }
+
+export const getUpdateStickerUrl = (id: string,) => {
+
+
+
+
+  return `/api/stickers/${id}`
+}
+
+/**
+ * @summary Save sticker position and proportional size
+ */
+export const updateSticker = async (id: string,
+    stickerLayoutInput: StickerLayoutInput, options?: RequestInit): Promise<DesktopSticker> => {
+
+  return customFetch<DesktopSticker>(getUpdateStickerUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(stickerLayoutInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateStickerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSticker>>, TError,{id: string;data: BodyType<StickerLayoutInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSticker>>, TError,{id: string;data: BodyType<StickerLayoutInput>}, TContext> => {
+
+const mutationKey = ['updateSticker'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSticker>>, {id: string;data: BodyType<StickerLayoutInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateSticker(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStickerMutationResult = NonNullable<Awaited<ReturnType<typeof updateSticker>>>
+    export type UpdateStickerMutationBody = BodyType<StickerLayoutInput>
+    export type UpdateStickerMutationError = ErrorType<void>
+
+    /**
+ * @summary Save sticker position and proportional size
+ */
+export const useUpdateSticker = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSticker>>, TError,{id: string;data: BodyType<StickerLayoutInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSticker>>,
+        TError,
+        {id: string;data: BodyType<StickerLayoutInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateStickerMutationOptions(options));
+    }
+
+export const getDeleteStickerUrl = (id: string,) => {
+
+
+
+
+  return `/api/stickers/${id}`
+}
+
+/**
+ * @summary Remove a sticker or abandon its upload
+ */
+export const deleteSticker = async (id: string, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteStickerUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteStickerMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSticker>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSticker>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['deleteSticker'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSticker>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteSticker(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteStickerMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSticker>>>
+
+    export type DeleteStickerMutationError = ErrorType<void>
+
+    /**
+ * @summary Remove a sticker or abandon its upload
+ */
+export const useDeleteSticker = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSticker>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSticker>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getDeleteStickerMutationOptions(options));
+    }
+
+export const getGetStickerImageUrl = (id: string,) => {
+
+
+
+
+  return `/api/stickers/${id}/image`
+}
+
+/**
+ * @summary Read an owned, verified PNG sticker
+ */
+export const getStickerImage = async (id: string, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getGetStickerImageUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStickerImageQueryKey = (id: string,) => {
+    return [
+    `/api/stickers/${id}/image`
+    ] as const;
+    }
+
+
+export const getGetStickerImageQueryOptions = <TData = Awaited<ReturnType<typeof getStickerImage>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStickerImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStickerImageQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStickerImage>>> = ({ signal }) => getStickerImage(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStickerImage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStickerImageQueryResult = NonNullable<Awaited<ReturnType<typeof getStickerImage>>>
+export type GetStickerImageQueryError = ErrorType<void>
+
+
+/**
+ * @summary Read an owned, verified PNG sticker
+ */
+
+export function useGetStickerImage<TData = Awaited<ReturnType<typeof getStickerImage>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStickerImage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStickerImageQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getRequestAttachmentUploadUrl = () => {
 

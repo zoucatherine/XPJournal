@@ -9,6 +9,144 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary List the signed-in user's desktop stickers
+ */
+export const listStickersResponseImageWidthMax = 1024;
+
+export const listStickersResponseImageHeightMax = 1024;
+
+export const listStickersResponseDisplaySizeMin = 24;
+export const listStickersResponseDisplaySizeMax = 512;
+
+
+
+export const ListStickersResponseItem = zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "size": zod.number().describe('Stored PNG bytes'),
+  "imageWidth": zod.number().min(1).max(listStickersResponseImageWidthMax),
+  "imageHeight": zod.number().min(1).max(listStickersResponseImageHeightMax),
+  "posX": zod.number(),
+  "posY": zod.number(),
+  "displaySize": zod.number().min(listStickersResponseDisplaySizeMin).max(listStickersResponseDisplaySizeMax)
+})
+export const ListStickersResponse = zod.array(ListStickersResponseItem)
+
+
+/**
+ * @summary Reserve a private PNG sticker upload
+ */
+export const requestStickerUploadBodyNameMax = 120;
+
+export const requestStickerUploadBodySizeMax = 1048576;
+
+
+
+export const RequestStickerUploadBody = zod.object({
+  "name": zod.string().min(1).max(requestStickerUploadBodyNameMax),
+  "size": zod.number().min(1).max(requestStickerUploadBodySizeMax)
+})
+
+export const RequestStickerUploadResponse = zod.object({
+  "id": zod.string().uuid(),
+  "uploadURL": zod.string()
+})
+
+
+/**
+ * @summary Verify a PNG upload and place it on the desktop
+ */
+export const FinalizeStickerParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const finalizeStickerResponseImageWidthMax = 1024;
+
+export const finalizeStickerResponseImageHeightMax = 1024;
+
+export const finalizeStickerResponseDisplaySizeMin = 24;
+export const finalizeStickerResponseDisplaySizeMax = 512;
+
+
+
+export const FinalizeStickerResponse = zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "size": zod.number().describe('Stored PNG bytes'),
+  "imageWidth": zod.number().min(1).max(finalizeStickerResponseImageWidthMax),
+  "imageHeight": zod.number().min(1).max(finalizeStickerResponseImageHeightMax),
+  "posX": zod.number(),
+  "posY": zod.number(),
+  "displaySize": zod.number().min(finalizeStickerResponseDisplaySizeMin).max(finalizeStickerResponseDisplaySizeMax)
+})
+
+
+/**
+ * @summary Save sticker position and proportional size
+ */
+export const UpdateStickerParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const updateStickerBodyPosXMin = 0;
+export const updateStickerBodyPosXMax = 100000;
+
+export const updateStickerBodyPosYMin = 0;
+export const updateStickerBodyPosYMax = 100000;
+
+export const updateStickerBodyDisplaySizeMin = 24;
+export const updateStickerBodyDisplaySizeMax = 512;
+
+
+
+export const UpdateStickerBody = zod.object({
+  "posX": zod.number().min(updateStickerBodyPosXMin).max(updateStickerBodyPosXMax),
+  "posY": zod.number().min(updateStickerBodyPosYMin).max(updateStickerBodyPosYMax),
+  "displaySize": zod.number().min(updateStickerBodyDisplaySizeMin).max(updateStickerBodyDisplaySizeMax).describe('Longest displayed edge in pixels')
+})
+
+export const updateStickerResponseImageWidthMax = 1024;
+
+export const updateStickerResponseImageHeightMax = 1024;
+
+export const updateStickerResponseDisplaySizeMin = 24;
+export const updateStickerResponseDisplaySizeMax = 512;
+
+
+
+export const UpdateStickerResponse = zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "size": zod.number().describe('Stored PNG bytes'),
+  "imageWidth": zod.number().min(1).max(updateStickerResponseImageWidthMax),
+  "imageHeight": zod.number().min(1).max(updateStickerResponseImageHeightMax),
+  "posX": zod.number(),
+  "posY": zod.number(),
+  "displaySize": zod.number().min(updateStickerResponseDisplaySizeMin).max(updateStickerResponseDisplaySizeMax)
+})
+
+
+/**
+ * @summary Remove a sticker or abandon its upload
+ */
+export const DeleteStickerParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const DeleteStickerResponse = zod.void()
+
+
+/**
+ * @summary Read an owned, verified PNG sticker
+ */
+export const GetStickerImageParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetStickerImageResponse = zod.unknown()
+
+
+/**
  * @summary Reserve a private image upload
  */
 export const requestAttachmentUploadBodyDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
