@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { MOODS, MoodIcon, moodLabel } from "./MoodIcon";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -1556,8 +1557,8 @@ function Desktop({
                       />
                     )}
                     {mood && (
-                      <span className="text-base leading-none mt-0.5 mr-0.5" title={`Mood: ${mood}`}>
-                        {mood}
+                      <span className="leading-none mt-0.5 mr-0.5" title={`Mood: ${moodLabel(mood)}`}>
+                        <MoodIcon mood={mood} />
                       </span>
                     )}
                   </div>
@@ -1800,7 +1801,6 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
   const discardRef = useRef(discardUpload.mutateAsync);
   discardRef.current = discardUpload.mutateAsync;
 
-  const MOODS = ["😊", "😄", "😍", "😎", "🥳", "😌", "😐", "😔", "😢", "😠", "😴", "🤒", "🎉", "💪", "🙏"];
 
   const [title, setTitle] = useState("");
   const [doc, setDoc] = useState<Doc>({ texts: [""], imgs: [] });
@@ -2036,31 +2036,33 @@ function EntryEditor({ date, onClose }: { date: Date; onClose: () => void }) {
 
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-sans" style={{ color: "var(--xp-window-text)" }}>
-                  Mood: {mood ? <span className="ml-1">{mood}</span> : <span className="ml-1 opacity-50">none</span>}
+                  Mood: {mood ? <span className="ml-1" title={moodLabel(mood)}><MoodIcon mood={mood} /></span> : <span className="ml-1 opacity-50">none</span>}
                 </label>
                 <div
                   className="xp-inset flex flex-wrap gap-1 p-1"
                   style={{ minHeight: "36px" }}
                 >
-                  {MOODS.map((emoji) => (
+                  {MOODS.map(({ value, label }) => (
                     <button
-                      key={emoji}
+                      key={value}
                       type="button"
-                      onClick={() => setMood(mood === emoji ? null : emoji)}
-                      title={emoji}
+                      onClick={() => setMood(mood === value ? null : value)}
+                      title={label}
+                      aria-label={label}
+                      aria-pressed={mood === value}
                       style={{
                         fontSize: "18px",
                         lineHeight: 1,
                         padding: "2px 4px",
                         cursor: "pointer",
-                        background: mood === emoji ? "var(--xp-accent)" : "transparent",
-                        border: mood === emoji ? "2px solid var(--xp-accent-dark)" : "2px solid transparent",
+                        background: mood === value ? "var(--xp-accent)" : "transparent",
+                        border: mood === value ? "2px solid var(--xp-accent-dark)" : "2px solid transparent",
                         borderRadius: "3px",
-                        opacity: mood && mood !== emoji ? 0.5 : 1,
+                        opacity: mood && mood !== value ? 0.5 : 1,
                         transition: "opacity 0.1s, border-color 0.1s",
                       }}
                     >
-                      {emoji}
+                      <MoodIcon mood={value} />
                     </button>
                   ))}
                 </div>

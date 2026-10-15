@@ -8,3 +8,4 @@
 - [Vercel deployments cannot reach Replit's managed Postgres](vercel-external-db-required.md) — external deploy targets need their own externally-reachable DB + secrets; runtime migrations should be self-sufficient for fresh DBs.
 - [Orval Zod catalog detection](orval-zod-catalog-version.md) — automatic validator version detection can target the wrong Zod major when pnpm catalog references are used.
 - [Journal attachment compatibility](journal-attachment-compatibility.md) — native editing of image-containing entries stays blocked until it can preserve both writing and image positions.
+- [Journal emoticon style](journal-emoticon-style.md) — use classic Messenger-style pixel emoticons for journal moods, not platform emoji artwork.
